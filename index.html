@@ -49,12 +49,33 @@
             text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(40px); filter: blur(10px); }
-            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        /* --- SNEAK PEAK BUTTON (TOP LEFT) --- */
+        .sneak-peak-btn {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            z-index: 100;
+            text-decoration: none;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
         }
 
-        /* --- CONTACT BUTTON STYLES --- */
+        .sneak-peak-btn:hover {
+            background: white;
+            color: black;
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+
+        /* --- CONTACT BUTTON (BOTTOM RIGHT) --- */
         .contact-trigger {
             position: fixed;
             bottom: 30px;
@@ -80,10 +101,10 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
 
-        /* --- SNACKBAR / OVERLAY STYLES --- */
+        /* --- SNACKBAR / OVERLAY --- */
         .snackbar {
             position: fixed;
-            bottom: 90px; /* Above the button */
+            bottom: 90px;
             right: 30px;
             z-index: 100;
             background: rgba(20, 20, 20, 0.85);
@@ -95,8 +116,6 @@
             color: white;
             width: 300px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.8);
-            
-            /* Hidden by default */
             opacity: 0;
             visibility: hidden;
             transform: translateY(20px);
@@ -146,16 +165,24 @@
         }
         .close-btn:hover { color: #fff; }
 
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(40px); filter: blur(10px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+
         @media (max-width: 768px) {
             h1 { font-size: 2.5rem; }
             .contact-trigger { bottom: 20px; right: 20px; padding: 12px 20px; font-size: 0.8rem; }
             .snackbar { right: 20px; bottom: 75px; width: 260px; }
+            .sneak-peak-btn { top: 20px; left: 20px; padding: 10px 20px; font-size: 0.7rem; }
         }
     </style>
 </head>
 <body>
 
     <canvas id="canvas"></canvas>
+
+    <a href="portfolio.html" class="sneak-peak-btn">Want to Sneak Peak?</a>
 
     <div class="content">
         <h1>Coming Soon...</h1>
@@ -173,7 +200,6 @@
     </div>
 
     <script>
-        // --- ANIMATION SCRIPT ---
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -234,7 +260,6 @@
         createParticles();
         animate();
 
-        // --- CONTACT TOGGLE FUNCTION ---
         function toggleContact() {
             const card = document.getElementById('contactCard');
             card.classList.toggle('active');
