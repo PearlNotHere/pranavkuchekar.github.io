@@ -7,7 +7,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         body, html {
@@ -17,7 +17,6 @@
             height: 100%;
             overflow: hidden;
             background-color: #0a0a0a;
-            /* Apply Montserrat Font */
             font-family: 'Montserrat', sans-serif;
             display: flex;
             justify-content: center;
@@ -40,24 +39,117 @@
 
         h1 {
             color: #ffffff;
-            font-size: 4.5rem; /* Slightly larger for impact */
-            font-weight: 700; /* Bold */
-            letter-spacing: 4px; /* Tightened spacing for bold text */
+            font-size: 5rem;
+            font-weight: 700;
+            letter-spacing: 2px;
             text-transform: uppercase;
             margin: 0;
             opacity: 0;
             animation: fadeIn 2.5s ease-out forwards;
-            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(30px); filter: blur(10px); }
+            from { opacity: 0; transform: translateY(40px); filter: blur(10px); }
             to { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
 
-        /* Mobile adjustment */
+        /* --- CONTACT BUTTON STYLES --- */
+        .contact-trigger {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .contact-trigger:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        /* --- SNACKBAR / OVERLAY STYLES --- */
+        .snackbar {
+            position: fixed;
+            bottom: 90px; /* Above the button */
+            right: 30px;
+            z-index: 100;
+            background: rgba(20, 20, 20, 0.85);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            color: white;
+            width: 300px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+            
+            /* Hidden by default */
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .snackbar.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .snackbar h3 {
+            margin: 0 0 15px 0;
+            font-size: 1.2rem;
+            color: #fff;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+
+        .snackbar p {
+            margin: 10px 0;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .snackbar a {
+            color: #aaa;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .snackbar a:hover {
+            color: #fff;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #666;
+            transition: color 0.2s;
+        }
+        .close-btn:hover { color: #fff; }
+
         @media (max-width: 768px) {
-            h1 { font-size: 2.5rem; letter-spacing: 2px; }
+            h1 { font-size: 2.5rem; }
+            .contact-trigger { bottom: 20px; right: 20px; padding: 12px 20px; font-size: 0.8rem; }
+            .snackbar { right: 20px; bottom: 75px; width: 260px; }
         }
     </style>
 </head>
@@ -69,7 +161,19 @@
         <h1>Coming Soon...</h1>
     </div>
 
+    <div class="contact-trigger" onclick="toggleContact()">
+        I Want to contact?
+    </div>
+
+    <div class="snackbar" id="contactCard">
+        <span class="close-btn" onclick="toggleContact()">&times;</span>
+        <h3>Pranav Kuchekar</h3>
+        <p>📞 <a href="tel:8308812191">8308812191</a></p>
+        <p>✉️ <a href="mailto:pranavkuchekar2105@gmail.com">pranavkuchekar2105@gmail.com</a></p>
+    </div>
+
     <script>
+        // --- ANIMATION SCRIPT ---
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -88,17 +192,14 @@
                 this.speedY = Math.random() * 1 - 0.5;
                 this.opacity = Math.random() * 0.5 + 0.2;
             }
-
             update() {
                 this.x += this.speedX;
                 this.y += this.speedY;
-
                 if (this.x > canvas.width) this.x = 0;
                 if (this.x < 0) this.x = canvas.width;
                 if (this.y > canvas.height) this.y = 0;
                 if (this.y < 0) this.y = canvas.height;
             }
-
             draw() {
                 ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
                 ctx.beginPath();
@@ -108,7 +209,7 @@
         }
 
         function createParticles() {
-            const particleCount = (canvas.width * canvas.height) / 9000; // Slightly more particles
+            const particleCount = (canvas.width * canvas.height) / 9000;
             for (let i = 0; i < particleCount; i++) {
                 particles.push(new Particle());
             }
@@ -132,6 +233,12 @@
         init();
         createParticles();
         animate();
+
+        // --- CONTACT TOGGLE FUNCTION ---
+        function toggleContact() {
+            const card = document.getElementById('contactCard');
+            card.classList.toggle('active');
+        }
     </script>
 </body>
 </html>
