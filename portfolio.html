@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio | Pranav Kuchekar</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- GLOBAL STYLES --- */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Montserrat', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* --- HERO SECTION --- */
+        .hero {
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #050505 70%);
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            animation: slideUp 1s ease-out;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: #aaa;
+            max-width: 600px;
+            line-height: 1.6;
+            animation: slideUp 1.2s ease-out;
+        }
+
+        /* --- PROJECT GRID --- */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 50px 20px;
+        }
+
+        .project-card {
+            display: flex;
+            align-items: center;
+            margin-bottom: 100px;
+            opacity: 0; /* Hidden for animation */
+            transform: translateY(50px);
+            transition: all 0.8s ease-out;
+        }
+
+        .project-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .project-card:nth-child(even) {
+            flex-direction: row-reverse; /* Zig-zag layout */
+        }
+
+        .card-image {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .card-image img {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .card-image img:hover {
+            transform: scale(1.02);
+        }
+
+        .card-info {
+            flex: 1;
+            padding: 40px;
+        }
+
+        .card-info h2 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .card-info h4 {
+            font-size: 1rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 0;
+        }
+
+        .card-info p {
+            color: #ccc;
+            line-height: 1.6;
+        }
+
+        /* --- BACK BUTTON --- */
+        .back-btn {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(5px);
+            z-index: 999;
+        }
+
+        /* ANIMATIONS */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .project-card, .project-card:nth-child(even) { flex-direction: column; }
+            .hero h1 { font-size: 2.5rem; }
+            .card-info { padding: 20px 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-btn">← Back to Home</a>
+
+    <section class="hero">
+        <h1>Selected Works</h1>
+        <p>
+            I am an aspiring Product and Industrial Designer passionate about creating human-centered products that combine function, aesthetics, and sustainability.
+        </p>
+    </section>
+
+    <div class="container">
+
+        <div class="project-card">
+            <div class="card-image">
+                <img src="https://placehold.co/600x400/222/FFF?text=Gyro+Bike+Image" alt="Gyro Bike">
+            </div>
+            <div class="card-info">
+                <h4>Furniture Design</h4>
+                <h2>Gyro Bike</h2>
+                <p>
+                    Inspired by the futuristic Gyro Bike from Alita: Battle Angel. This design reinterprets the iconic mono-wheel form into a playful, child-friendly structure. The continuous circular base suggests motion and balance.
+                </p>
+            </div>
+        </div>
+
+        <div class="project-card">
+            <div class="card-image">
+                <img src="https://placehold.co/600x400/222/FFF?text=Scarava+Iron+Image" alt="Scarava Iron">
+            </div>
+            <div class="card-info">
+                <h4>Biomimicry Form Study</h4>
+                <h2>Scarava</h2>
+                <p>
+                    A beetle-inspired iron. Inspired by the beetle's form and strength, this iron combines organic curves with ergonomic detailing and a removable handle for ease and portability.
+                </p>
+            </div>
+        </div>
+
+        <div class="project-card">
+            <div class="card-image">
+                <img src="https://placehold.co/600x400/222/FFF?text=AirEase+Stand+Image" alt="AirEase Stand">
+            </div>
+            <div class="card-info">
+                <h4>Basic Product Design</h4>
+                <h2>AirEase Stand</h2>
+                <p>
+                    A sleek, ergonomic laptop stand crafted for comfort, posture, and performance. Inspired by the flow of air and lightweight structural forms (like the scorpion), it elevates your workspace.
+                </p>
+            </div>
+        </div>
+
+        <div class="project-card">
+            <div class="card-image">
+                <img src="https://placehold.co/600x400/222/FFF?text=Shoe+Shelf+Image" alt="Shoe Shelf">
+            </div>
+            <div class="card-info">
+                <h4>Materials Exploration</h4>
+                <h2>Shoe Shelf</h2>
+                <p>
+                    Designed to bring order, elegance, and functionality to everyday spaces. Built for compact urban living, the design focuses on space efficiency, ease of use, and aesthetic simplicity using wood joinery.
+                </p>
+            </div>
+        </div>
+
+        <div class="project-card">
+            <div class="card-image">
+                <img src="https://placehold.co/600x400/222/FFF?text=Water+Dispenser+Image" alt="Water Dispenser">
+            </div>
+            <div class="card-info">
+                <h4>Universal Design</h4>
+                <h2>Water Dispenser</h2>
+                <p>
+                    Designed with inclusivity at its core—enabling everyone, regardless of age or ability, to access water comfortably. It reimagines the everyday jug emphasizing effortless usability and ergonomic handling.
+                </p>
+            </div>
+        </div>
+        
+        <div class="project-card">
+            <div class="card-image">
+                <img src="https://placehold.co/600x400/222/FFF?text=IGH+Website+Image" alt="IGH Website">
+            </div>
+            <div class="card-info">
+                <h4>UI/UX Design</h4>
+                <h2>Guest House Booking</h2>
+                <p>
+                    Simplifying the guest house booking process at IIT Hyderabad. A digital platform designed to replace manual email chains with intuitive interfaces, real-time availability, and inclusive access.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.project-card').forEach((card) => {
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>
