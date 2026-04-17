@@ -165,6 +165,14 @@
         .page-container img {
             width: 100%;
             display: block;
+            -webkit-user-select: none;
+            user-select: none;
+            pointer-events: none;
+            -webkit-user-drag: none;
+        }
+
+        .page-container {
+            -webkit-touch-callout: none;
         }
 
         /* Placeholder while image loads */
@@ -332,6 +340,14 @@
                 e.preventDefault();
                 if (currentZoom > 50) { currentZoom -= 15; applyZoom(); }
             }
+        });
+
+        // --- Prevent right-click and drag on images ---
+        document.addEventListener('contextmenu', e => {
+            if (e.target.tagName === 'IMG') e.preventDefault();
+        });
+        document.addEventListener('dragstart', e => {
+            if (e.target.tagName === 'IMG') e.preventDefault();
         });
     </script>
 </body>
