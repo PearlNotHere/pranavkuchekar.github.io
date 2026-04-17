@@ -78,7 +78,6 @@
             font-weight: 600;
         }
 
-        /* Page counter */
         .toolbar-center {
             display: flex;
             align-items: center;
@@ -108,7 +107,6 @@
             font-weight: 400;
         }
 
-        /* Toolbar buttons */
         .toolbar-right {
             display: flex;
             align-items: center;
@@ -132,7 +130,6 @@
         }
 
         .tb-btn:hover { background: #333; color: #fff; }
-        .tb-btn.active { background: #444; color: #fff; }
 
         .zoom-display {
             font-size: 0.7rem;
@@ -143,74 +140,14 @@
         }
 
         /* ============================================
-           SIDEBAR (Page thumbnails)
-           ============================================ */
-        .sidebar {
-            position: fixed;
-            top: 48px;
-            left: 0;
-            bottom: 0;
-            width: 160px;
-            background: #1e1e1e;
-            border-right: 1px solid #333;
-            overflow-y: auto;
-            z-index: 100;
-            padding: 12px 0;
-            transition: transform 0.3s ease;
-            scrollbar-width: thin;
-            scrollbar-color: #444 transparent;
-        }
-
-        .sidebar::-webkit-scrollbar { width: 4px; }
-        .sidebar::-webkit-scrollbar-track { background: transparent; }
-        .sidebar::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
-
-        .sidebar.hidden { transform: translateX(-160px); }
-
-        .thumb-item {
-            padding: 6px 12px;
-            cursor: pointer;
-            transition: background 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .thumb-item:hover { background: rgba(255,255,255,0.04); }
-        .thumb-item.active { background: rgba(255,255,255,0.08); }
-
-        .thumb-item img {
-            width: 100%;
-            border-radius: 2px;
-            border: 2px solid transparent;
-            transition: border-color 0.2s;
-            display: block;
-        }
-
-        .thumb-item.active img { border-color: rgba(255,255,255,0.4); }
-
-        .thumb-num {
-            font-size: 0.55rem;
-            color: #666;
-            font-weight: 500;
-        }
-
-        .thumb-item.active .thumb-num { color: #ccc; }
-
-        /* ============================================
            DOCUMENT AREA
            ============================================ */
         .doc-area {
-            margin-left: 160px;
             padding: 24px 0 60px;
             min-height: calc(100vh - 48px);
             margin-top: 48px;
-            transition: margin-left 0.3s ease;
             background: #2a2a2a;
         }
-
-        .doc-area.expanded { margin-left: 0; }
 
         .page-wrapper {
             max-width: 850px;
@@ -230,74 +167,20 @@
             display: block;
         }
 
-        /* Scroll-reveal */
-        .page-wrapper {
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-
-        .page-wrapper.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* ============================================
-           KEYBOARD SHORTCUTS TOOLTIP
-           ============================================ */
-        .shortcuts-tip {
-            position: fixed;
-            bottom: 16px;
-            right: 16px;
-            z-index: 100;
-            background: rgba(0,0,0,0.75);
-            backdrop-filter: blur(8px);
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 14px 18px;
-            color: #aaa;
-            font-size: 0.65rem;
-            line-height: 1.8;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(8px);
-            transition: all 0.25s ease;
-        }
-
-        .shortcuts-tip.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        .shortcuts-tip kbd {
-            background: #333;
-            border: 1px solid #555;
-            border-radius: 3px;
-            padding: 1px 6px;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 0.6rem;
-            color: #ddd;
-            margin-right: 6px;
+        /* Placeholder while image loads */
+        .page-container img[data-src] {
+            min-height: 500px;
+            background: #e8e8e8;
         }
 
         /* ============================================
            RESPONSIVE
            ============================================ */
-        @media (max-width: 900px) {
-            .sidebar { width: 120px; }
-            .doc-area { margin-left: 120px; }
-            .sidebar.hidden + .doc-area,
-            .doc-area.expanded { margin-left: 0; }
-        }
-
         @media (max-width: 640px) {
-            .sidebar { display: none; }
-            .doc-area { margin-left: 0; }
             .toolbar-title { display: none; }
             .page-wrapper { padding: 0 8px; margin-bottom: 10px; }
-            .shortcuts-tip { display: none; }
             .toolbar { padding: 0 8px; }
+            .page-container img[data-src] { min-height: 250px; }
         }
     </style>
 </head>
@@ -320,10 +203,6 @@
         </div>
 
         <div class="toolbar-right">
-            <button class="tb-btn" id="sidebarToggle" title="Toggle sidebar" aria-label="Toggle sidebar">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-            </button>
-            <div class="toolbar-divider"></div>
             <button class="tb-btn" id="zoomOut" title="Zoom out" aria-label="Zoom out">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
@@ -331,84 +210,70 @@
             <button class="tb-btn" id="zoomIn" title="Zoom in" aria-label="Zoom in">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
-            <div class="toolbar-divider"></div>
-            <button class="tb-btn" id="shortcutsBtn" title="Keyboard shortcuts" aria-label="Keyboard shortcuts">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="8"/></svg>
-            </button>
         </div>
     </div>
-
-    <!-- ========== SIDEBAR ========== -->
-    <div class="sidebar" id="sidebar"></div>
 
     <!-- ========== DOCUMENT AREA ========== -->
     <div class="doc-area" id="docArea"></div>
 
-    <!-- ========== SHORTCUTS ========== -->
-    <div class="shortcuts-tip" id="shortcutsTip">
-        <kbd>↑</kbd><kbd>↓</kbd> Scroll<br>
-        <kbd>+</kbd><kbd>−</kbd> Zoom<br>
-        <kbd>S</kbd> Toggle sidebar
-    </div>
-
     <script>
         const TOTAL = 30;
-        const sidebar = document.getElementById('sidebar');
+        const EAGER_COUNT = 5; // First 5 pages load immediately
         const docArea = document.getElementById('docArea');
         const pageInput = document.getElementById('pageInput');
         const zoomDisplay = document.getElementById('zoomDisplay');
         let currentZoom = 100;
         let currentPage = 1;
 
-        // --- Generate pages ---
+        // --- Generate all pages ---
         for (let i = 1; i <= TOTAL; i++) {
             const src = `portfolio/Slide ${i}.jpg`;
-
-            // Sidebar thumbnail
-            const thumb = document.createElement('div');
-            thumb.className = 'thumb-item' + (i === 1 ? ' active' : '');
-            thumb.dataset.page = i;
-            thumb.innerHTML = `<img src="${src}" alt="Page ${i}" loading="lazy"><span class="thumb-num">${i}</span>`;
-            thumb.onclick = () => scrollToPage(i);
-            sidebar.appendChild(thumb);
-
-            // Main page
             const wrapper = document.createElement('div');
             wrapper.className = 'page-wrapper';
             wrapper.id = `page-${i}`;
             wrapper.dataset.page = i;
-            wrapper.innerHTML = `<div class="page-container"><img src="${src}" alt="Portfolio page ${i}" loading="lazy"></div>`;
+
+            const container = document.createElement('div');
+            container.className = 'page-container';
+
+            const img = document.createElement('img');
+            img.alt = `Portfolio page ${i}`;
+
+            if (i <= EAGER_COUNT) {
+                // First pages: load immediately, high priority
+                img.src = src;
+                img.fetchPriority = i === 1 ? 'high' : 'auto';
+                img.decoding = 'async';
+            } else {
+                // Remaining pages: manual lazy load via IntersectionObserver
+                img.dataset.src = src;
+            }
+
+            container.appendChild(img);
+            wrapper.appendChild(container);
             docArea.appendChild(wrapper);
         }
 
-        // --- Scroll to page ---
-        function scrollToPage(n) {
-            const el = document.getElementById(`page-${n}`);
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }
-
-        // --- Page input navigation ---
-        pageInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter') {
-                let val = parseInt(pageInput.value);
-                if (val >= 1 && val <= TOTAL) {
-                    scrollToPage(val);
-                } else {
-                    pageInput.value = currentPage;
+        // --- Lazy loader: load images when they're ~800px from viewport ---
+        const lazyObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target.querySelector('img[data-src]');
+                    if (img) {
+                        img.src = img.dataset.src;
+                        img.removeAttribute('data-src');
+                    }
+                    lazyObserver.unobserve(entry.target);
                 }
-                pageInput.blur();
-            }
-        });
+            });
+        }, { rootMargin: '800px 0px' }); // Start loading 800px before visible
 
-        pageInput.addEventListener('blur', () => {
-            pageInput.value = currentPage;
+        document.querySelectorAll('.page-wrapper').forEach((pw, i) => {
+            if (i >= EAGER_COUNT) lazyObserver.observe(pw);
         });
 
         // --- Track current page on scroll ---
         const pageWrappers = document.querySelectorAll('.page-wrapper');
-        const thumbItems = document.querySelectorAll('.thumb-item');
 
         const pageObserver = new IntersectionObserver(entries => {
             entries.forEach(entry => {
@@ -416,87 +281,56 @@
                     const p = parseInt(entry.target.dataset.page);
                     currentPage = p;
                     pageInput.value = p;
-
-                    thumbItems.forEach(t => t.classList.remove('active'));
-                    const activeThumb = sidebar.querySelector(`[data-page="${p}"]`);
-                    if (activeThumb) {
-                        activeThumb.classList.add('active');
-                        // Keep active thumb visible in sidebar
-                        activeThumb.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                    }
                 }
             });
         }, { threshold: 0.3 });
 
         pageWrappers.forEach(pw => pageObserver.observe(pw));
 
-        // --- Scroll-reveal ---
-        const revealObserver = new IntersectionObserver(entries => {
-            entries.forEach(e => {
-                if (e.isIntersecting) e.target.classList.add('visible');
-            });
-        }, { threshold: 0.05 });
-
-        pageWrappers.forEach(pw => revealObserver.observe(pw));
-
-        // --- Sidebar toggle ---
-        const sidebarEl = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        let sidebarVisible = true;
-
-        sidebarToggle.addEventListener('click', () => {
-            sidebarVisible = !sidebarVisible;
-            sidebarEl.classList.toggle('hidden', !sidebarVisible);
-            docArea.classList.toggle('expanded', !sidebarVisible);
-            sidebarToggle.classList.toggle('active', !sidebarVisible);
+        // --- Page input navigation ---
+        pageInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                let val = parseInt(pageInput.value);
+                if (val >= 1 && val <= TOTAL) {
+                    // Force-load the target image if not yet loaded
+                    const targetImg = document.querySelector(`#page-${val} img[data-src]`);
+                    if (targetImg) {
+                        targetImg.src = targetImg.dataset.src;
+                        targetImg.removeAttribute('data-src');
+                    }
+                    document.getElementById(`page-${val}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    pageInput.value = currentPage;
+                }
+                pageInput.blur();
+            }
         });
 
-        // --- Zoom ---
-        const zoomIn = document.getElementById('zoomIn');
-        const zoomOut = document.getElementById('zoomOut');
+        pageInput.addEventListener('blur', () => { pageInput.value = currentPage; });
 
+        // --- Zoom ---
         function applyZoom() {
-            const pages = document.querySelectorAll('.page-wrapper');
-            const maxW = 850 * (currentZoom / 100);
-            pages.forEach(p => p.style.maxWidth = maxW + 'px');
+            pageWrappers.forEach(p => p.style.maxWidth = (850 * currentZoom / 100) + 'px');
             zoomDisplay.textContent = currentZoom + '%';
         }
 
-        zoomIn.addEventListener('click', () => {
+        document.getElementById('zoomIn').addEventListener('click', () => {
             if (currentZoom < 200) { currentZoom += 15; applyZoom(); }
         });
 
-        zoomOut.addEventListener('click', () => {
+        document.getElementById('zoomOut').addEventListener('click', () => {
             if (currentZoom > 50) { currentZoom -= 15; applyZoom(); }
         });
 
-        // --- Keyboard shortcuts ---
-        const shortcutsBtn = document.getElementById('shortcutsBtn');
-        const shortcutsTip = document.getElementById('shortcutsTip');
-
-        shortcutsBtn.addEventListener('click', () => {
-            shortcutsTip.classList.toggle('show');
-        });
-
+        // Keyboard zoom
         document.addEventListener('keydown', e => {
             if (document.activeElement === pageInput) return;
-
             if (e.key === '+' || e.key === '=') {
                 e.preventDefault();
                 if (currentZoom < 200) { currentZoom += 15; applyZoom(); }
             } else if (e.key === '-') {
                 e.preventDefault();
                 if (currentZoom > 50) { currentZoom -= 15; applyZoom(); }
-            } else if (e.key === 's' || e.key === 'S') {
-                e.preventDefault();
-                sidebarToggle.click();
-            }
-        });
-
-        // Close shortcuts on outside click
-        document.addEventListener('click', e => {
-            if (!shortcutsTip.contains(e.target) && !shortcutsBtn.contains(e.target)) {
-                shortcutsTip.classList.remove('show');
             }
         });
     </script>
