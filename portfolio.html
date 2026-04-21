@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio | Pranav Kuchekar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #2a2a2a;
+            font-family: 'Montserrat', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* ============================================
+           PDF TOOLBAR
+           ============================================ */
+        .toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            height: 48px;
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toolbar-back {
+            color: #ccc;
+            text-decoration: none;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 6px 14px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toolbar-back:hover { background: #333; color: #fff; }
+
+        .toolbar-divider {
+            width: 1px;
+            height: 24px;
+            background: #333;
+        }
+
+        .toolbar-title {
+            font-size: 0.75rem;
+            color: #999;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+
+        .toolbar-title strong {
+            color: #ddd;
+            font-weight: 600;
+        }
+
+        .toolbar-center {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-input {
+            background: #111;
+            border: 1px solid #444;
+            border-radius: 3px;
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            width: 42px;
+            text-align: center;
+            padding: 4px 0;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .page-input:focus { border-color: #888; }
+
+        .page-total {
+            font-size: 0.75rem;
+            color: #888;
+            font-weight: 400;
+        }
+
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tb-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            width: 34px;
+            height: 34px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .tb-btn:hover { background: #333; color: #fff; }
+
+        .zoom-display {
+            font-size: 0.7rem;
+            color: #888;
+            min-width: 40px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* ============================================
+           DOCUMENT AREA
+           ============================================ */
+        .doc-area {
+            padding: 24px 0 60px;
+            min-height: calc(100vh - 48px);
+            margin-top: 48px;
+            background: #2a2a2a;
+        }
+
+        .page-wrapper {
+            max-width: 850px;
+            margin: 0 auto 16px;
+            padding: 0 24px;
+        }
+
+        .page-container {
+            background: #fff;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-container img {
+            width: 100%;
+            display: block;
+            -webkit-user-select: none;
+            user-select: none;
+            pointer-events: none;
+            -webkit-user-drag: none;
+        }
+
+        .page-container {
+            -webkit-touch-callout: none;
+        }
+
+        /* Placeholder while image loads */
+        .page-container img[data-src] {
+            min-height: 500px;
+            background: #e8e8e8;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 640px) {
+            .toolbar-title { display: none; }
+            .page-wrapper { padding: 0 8px; margin-bottom: 10px; }
+            .toolbar { padding: 0 8px; }
+            .page-container img[data-src] { min-height: 250px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========== TOOLBAR ========== -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <a href="index.html" class="toolbar-back">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+                Home
+            </a>
+            <div class="toolbar-divider"></div>
+            <span class="toolbar-title"><strong>Pranav Kuchekar</strong> — Portfolio</span>
+        </div>
+
+        <div class="toolbar-center">
+            <input type="text" class="page-input" id="pageInput" value="1" aria-label="Current page">
+            <span class="page-total">/ 30</span>
+        </div>
+
+        <div class="toolbar-right">
+            <button class="tb-btn" id="zoomOut" title="Zoom out" aria-label="Zoom out">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <span class="zoom-display" id="zoomDisplay">100%</span>
+            <button class="tb-btn" id="zoomIn" title="Zoom in" aria-label="Zoom in">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- ========== DOCUMENT AREA ========== -->
+    <div class="doc-area" id="docArea"></div>
+
+    <script>
+        const TOTAL = 30;
+        const EAGER_COUNT = 5; // First 5 pages load immediately
+        const docArea = document.getElementById('docArea');
+        const pageInput = document.getElementById('pageInput');
+        const zoomDisplay = document.getElementById('zoomDisplay');
+        let currentZoom = 100;
+        let currentPage = 1;
+
+        // --- Generate all pages ---
+        for (let i = 1; i <= TOTAL; i++) {
+            const src = `portfolio/Slide ${i}.jpg`;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'page-wrapper';
+            wrapper.id = `page-${i}`;
+            wrapper.dataset.page = i;
+
+            const container = document.createElement('div');
+            container.className = 'page-container';
+
+            const img = document.createElement('img');
+            img.alt = `Portfolio page ${i}`;
+
+            if (i <= EAGER_COUNT) {
+                // First pages: load immediately, high priority
+                img.src = src;
+                img.fetchPriority = i === 1 ? 'high' : 'auto';
+                img.decoding = 'async';
+            } else {
+                // Remaining pages: manual lazy load via IntersectionObserver
+                img.dataset.src = src;
+            }
+
+            container.appendChild(img);
+            wrapper.appendChild(container);
+            docArea.appendChild(wrapper);
+        }
+
+        // --- Lazy loader: load images when they're ~800px from viewport ---
+        const lazyObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target.querySelector('img[data-src]');
+                    if (img) {
+                        img.src = img.dataset.src;
+                        img.removeAttribute('data-src');
+                    }
+                    lazyObserver.unobserve(entry.target);
+                }
+            });
+        }, { rootMargin: '800px 0px' }); // Start loading 800px before visible
+
+        document.querySelectorAll('.page-wrapper').forEach((pw, i) => {
+            if (i >= EAGER_COUNT) lazyObserver.observe(pw);
+        });
+
+        // --- Track current page on scroll ---
+        const pageWrappers = document.querySelectorAll('.page-wrapper');
+
+        const pageObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const p = parseInt(entry.target.dataset.page);
+                    currentPage = p;
+                    pageInput.value = p;
+                }
+            });
+        }, { threshold: 0.3 });
+
+        pageWrappers.forEach(pw => pageObserver.observe(pw));
+
+        // --- Page input navigation ---
+        pageInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                let val = parseInt(pageInput.value);
+                if (val >= 1 && val <= TOTAL) {
+                    // Force-load the target image if not yet loaded
+                    const targetImg = document.querySelector(`#page-${val} img[data-src]`);
+                    if (targetImg) {
+                        targetImg.src = targetImg.dataset.src;
+                        targetImg.removeAttribute('data-src');
+                    }
+                    document.getElementById(`page-${val}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    pageInput.value = currentPage;
+                }
+                pageInput.blur();
+            }
+        });
+
+        pageInput.addEventListener('blur', () => { pageInput.value = currentPage; });
+
+        // --- Zoom ---
+        function applyZoom() {
+            pageWrappers.forEach(p => p.style.maxWidth = (850 * currentZoom / 100) + 'px');
+            zoomDisplay.textContent = currentZoom + '%';
+        }
+
+        document.getElementById('zoomIn').addEventListener('click', () => {
+            if (currentZoom < 200) { currentZoom += 15; applyZoom(); }
+        });
+
+        document.getElementById('zoomOut').addEventListener('click', () => {
+            if (currentZoom > 50) { currentZoom -= 15; applyZoom(); }
+        });
+
+        // Keyboard zoom
+        document.addEventListener('keydown', e => {
+            if (document.activeElement === pageInput) return;
+            if (e.key === '+' || e.key === '=') {
+                e.preventDefault();
+                if (currentZoom < 200) { currentZoom += 15; applyZoom(); }
+            } else if (e.key === '-') {
+                e.preventDefault();
+                if (currentZoom > 50) { currentZoom -= 15; applyZoom(); }
+            }
+        });
+
+        // --- Prevent right-click and drag on images ---
+        document.addEventListener('contextmenu', e => {
+            if (e.target.tagName === 'IMG') e.preventDefault();
+        });
+        document.addEventListener('dragstart', e => {
+            if (e.target.tagName === 'IMG') e.preventDefault();
+        });
+    </script>
+</body>
+</html>
