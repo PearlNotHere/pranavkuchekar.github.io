@@ -507,3 +507,17 @@ html.lb [data-b="rule"].is-built.popped { animation: lb-rule .6s var(--ease-out)
   .tb-tab { padding: 7px 7px; font-size: 12px; }
   .tb-btn { padding: 9px 12px; font-size: 12px; }
 }
+
+/* Text-only project cards + skills grid */
+.card-text { padding: clamp(20px, 2.4vw, 28px); align-content: start; gap: 14px; }
+.card-text .h-md { font-size: clamp(26px, 2.6vw, 34px); }
+.card-text .body { font-size: 15px; line-height: 1.6; }
+.card-text:hover { transform: none; }
+.skills { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.skill {
+  display: grid; gap: 10px; align-content: start; padding: clamp(20px, 2.4vw, 28px);
+  border: 1px solid var(--hair); border-radius: 18px; background: rgba(255,255,255,.015);
+}
+.skill h3 { font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
+.skill-wide { grid-column: 1 / -1; }
+@media (max-width: 760px) { .skills { grid-template-columns: 1fr; } }
