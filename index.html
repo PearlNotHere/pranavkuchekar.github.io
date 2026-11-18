@@ -1,328 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coming Soon | Pranav Kuchekar</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #0a0a0a;
-            font-family: 'Montserrat', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        canvas#canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
-
-        .content {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            pointer-events: none;
-        }
-
-        .label {
-            font-size: 0.65rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            color: rgba(255,255,255,0.25);
-            margin-bottom: 18px;
-            opacity: 0;
-            animation: fadeIn 1.5s ease-out 0.2s forwards;
-        }
-
-        h1 {
-            color: #ffffff;
-            font-size: clamp(2.5rem, 7vw, 5.5rem);
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin: 0;
-            opacity: 0;
-            animation: fadeIn 2s ease-out 0.5s forwards;
-            text-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
-        }
-
-        .tagline {
-            font-size: clamp(0.8rem, 1.5vw, 0.95rem);
-            color: rgba(255,255,255,0.2);
-            font-weight: 300;
-            margin-top: 12px;
-            letter-spacing: 2px;
-            opacity: 0;
-            animation: fadeIn 2s ease-out 0.8s forwards;
-        }
-
-        .portfolio-btn {
-            display: inline-block;
-            margin-top: 28px;
-            z-index: 100;
-            text-decoration: none;
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
-            padding: 14px 30px;
-            border-radius: 30px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            opacity: 0;
-            animation: fadeIn 1.5s ease-out 1s forwards;
-            pointer-events: all;
-        }
-
-        .portfolio-btn:hover {
-            background: white;
-            color: #0a0a0a;
-            box-shadow: 0 0 20px rgba(255,255,255,0.3);
-            transform: translateY(-2px);
-        }
-
-        .contact-trigger {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: white;
-            padding: 14px 24px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.8rem;
-            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-family: 'Montserrat', sans-serif;
-            opacity: 0;
-            animation: fadeIn 1.5s ease-out 1.4s forwards;
-        }
-
-        .contact-trigger:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
-
-        .snackbar {
-            position: fixed;
-            bottom: 85px;
-            right: 30px;
-            z-index: 100;
-            background: rgba(15, 15, 15, 0.92);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 28px;
-            border-radius: 16px;
-            color: white;
-            width: 300px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(15px) scale(0.97);
-            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .snackbar.active {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0) scale(1);
-        }
-
-        .snackbar h3 { margin: 0 0 16px 0; font-size: 1.1rem; font-weight: 700; }
-
-        .snackbar-line { height: 1px; background: rgba(255,255,255,0.1); margin-bottom: 16px; }
-
-        .contact-row { display: flex; align-items: center; gap: 12px; margin: 12px 0; font-size: 0.88rem; }
-
-        .contact-row .icon {
-            width: 34px; height: 34px; border-radius: 8px;
-            background: rgba(255,255,255,0.06);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.85rem; flex-shrink: 0;
-        }
-
-        .snackbar a { color: rgba(255,255,255,0.6); text-decoration: none; transition: color 0.2s; }
-        .snackbar a:hover { color: #fff; }
-
-        .close-btn {
-            position: absolute; top: 14px; right: 16px; cursor: pointer;
-            font-size: 1.3rem; color: rgba(255,255,255,0.25); transition: color 0.2s; line-height: 1;
-        }
-        .close-btn:hover { color: #fff; }
-
-        .corner-text {
-            position: fixed; bottom: 30px; left: 30px; z-index: 10;
-            font-size: 0.55rem; color: rgba(255,255,255,0.1);
-            letter-spacing: 3px; text-transform: uppercase;
-            writing-mode: vertical-lr; transform: rotate(180deg);
-            opacity: 0; animation: fadeIn 2s ease-out 1.5s forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(30px); filter: blur(6px); }
-            to { opacity: 1; transform: translateY(0); filter: blur(0); }
-        }
-
-        @media (max-width: 768px) {
-            .contact-trigger { bottom: 20px; right: 20px; padding: 11px 18px; font-size: 0.7rem; }
-            .snackbar { right: 20px; bottom: 70px; width: 260px; padding: 22px; }
-            .portfolio-btn { padding: 12px 24px; font-size: 0.7rem; }
-            .corner-text { display: none; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pranav Kuchekar | Product, Industrial &amp; UI/UX Designer</title>
+  <meta name="description" content="Pranav Kuchekar is a multidisciplinary designer at IIT Hyderabad working across product, industrial, furniture and UI/UX design.">
+  <meta name="theme-color" content="#1d1d1d">
+  <script>(function(){var d=document.documentElement;try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&location.search.indexOf('final')<0)d.classList.add('lb')}catch(e){}setTimeout(function(){if(!window.__lb)d.classList.remove('lb')},4000)})();</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/canvas.css">
 </head>
-<body>
+<body data-page="landing">
 
-    <canvas id="canvas"></canvas>
-
-    <div class="content">
-        <div class="label">Multidisciplinary Designer</div>
-        <h1>Pranav Kuchekar</h1>
-        <div class="tagline">Website Under Development</div>
-        <a href="portfolio.html" class="portfolio-btn">Full Portfolio</a>
+  <header class="tb">
+    <a class="tb-logo" href="index.html" aria-label="Pranav Kuchekar, home">PK</a>
+    <div class="tb-file"><span>Drafts /</span><strong>pranav-kuchekar.site</strong></div>
+    <nav class="tb-tabs" aria-label="Pages">
+      <a class="tb-tab" href="index.html" aria-current="page">Landing</a>
+      <a class="tb-tab" href="portfolio.html">Portfolio 1</a>
+      <a class="tb-tab" href="portfolio2.html">Portfolio 2</a>
+    </nav>
+    <div class="tb-spacer"></div>
+    <div class="tb-people">
+      <span class="tb-live">2 editing</span>
+      <div class="tb-avatars"><span class="tb-av p" title="Pranav">P</span><span class="tb-av c" title="Claude">C</span></div>
     </div>
+    <a class="tb-btn" href="#contact">Contact</a>
+  </header>
 
-    <div class="contact-trigger" onclick="toggleContact()">Contact</div>
+  <aside class="panel layers" aria-label="Layers">
+    <h4>Layers <span id="layer-count"></span></h4>
+    <div id="layers"></div>
+  </aside>
+  <aside class="panel inspect" aria-label="Inspector">
+    <h4>Design <span>Inspect</span></h4>
+    <div id="inspect-body"></div>
+  </aside>
 
-    <div class="snackbar" id="contactCard">
-        <span class="close-btn" onclick="toggleContact()">&times;</span>
-        <h3>Pranav Kuchekar</h3>
-        <div class="snackbar-line"></div>
-        <div class="contact-row">
-            <div class="icon">📞</div>
-            <a href="tel:8308812191">8308812191</a>
-        </div>
-        <div class="contact-row">
-            <div class="icon">✉️</div>
-            <a href="mailto:pranavkuchekar2105@gmail.com">pranavkuchekar2105@gmail.com</a>
-        </div>
+  <main class="canvas">
+    <div class="frame-wrap">
+      <div class="frame-label"><b>Landing</b><span>Desktop · 1240</span></div>
+      <div class="frame">
+
+        <!-- HERO -->
+        <section class="sec" data-section="Hero" id="top">
+          <div class="hero">
+            <div class="hero-copy">
+              <span class="eyebrow" data-b="type" data-name="Eyebrow">Multidisciplinary Designer · IIT Hyderabad</span>
+              <h1 class="h-xl" data-b="type" data-mode="char" data-name="Title">Hello,<br>I’m Pranav.</h1>
+              <p class="lead" data-b="type" data-name="Intro" style="max-width: 34ch">I design human-centred products that combine function, aesthetics and sustainability, from furniture and industrial forms to digital interfaces.</p>
+              <div class="hero-ctas">
+                <a class="btn solid" href="portfolio.html" data-b="box" data-name="Button / Portfolio 1">View Portfolio 1
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+                <a class="btn" href="portfolio2.html" data-b="box" data-name="Button / Portfolio 2">Open the full deck</a>
+              </div>
+            </div>
+            <div class="portrait" data-b="img" data-name="Portrait" role="img" aria-label="Portrait of Pranav Kuchekar">
+              <span class="portrait-tag">Pranav Kuchekar</span>
+            </div>
+          </div>
+          <div class="hero-meta" data-b="box" data-name="Meta strip">
+            <div><span class="mono">Focus</span><b data-b="type">Product &amp; Industrial Design</b></div>
+            <div><span class="mono">Also</span><b data-b="type">UI/UX · Graphic · Furniture</b></div>
+            <div><span class="mono">Studying</span><b data-b="type">B.Des, IIT Hyderabad</b></div>
+          </div>
+        </section>
+
+        <!-- WORK -->
+        <section class="sec" data-section="Selected work" id="work">
+          <div class="sec-head">
+            <div>
+              <span class="eyebrow" data-b="type" data-name="Eyebrow">Selected work</span>
+              <h2 class="h-lg" data-b="type" data-mode="char" data-name="Heading">Things I’ve made</h2>
+            </div>
+            <a class="link-arrow" href="portfolio.html" data-b="box" data-name="Link / All projects">All projects <span aria-hidden="true">→</span></a>
+          </div>
+          <div class="work-grid">
+            <a class="card card-feature" href="portfolio.html#igh" data-b="box" data-name="Card / IGH">
+              <div class="media" data-b="img"><img src="images/igh-booking-ui.jpg" alt="IGH guest house booking website" loading="lazy"></div>
+              <div class="card-row"><h3 data-b="type">Website Design for IGH</h3><span class="mono">UI/UX</span></div>
+            </a>
+            <a class="card" href="portfolio.html#gyro-bike" data-b="box" data-name="Card / Gyro Bike">
+              <div class="media" data-b="img"><img src="images/gyro-bike.jpg" alt="Gyro Bike cardboard prototype" loading="lazy"></div>
+              <div class="card-row"><h3 data-b="type">Gyro Bike</h3><span class="mono">01</span></div>
+            </a>
+            <a class="card" href="portfolio.html#scarava" data-b="box" data-name="Card / Scarava">
+              <div class="media" data-b="img"><img src="images/scarava-iron.jpg" alt="Scarava beetle-inspired iron" loading="lazy"></div>
+              <div class="card-row"><h3 data-b="type">Scarava</h3><span class="mono">02</span></div>
+            </a>
+            <a class="card" href="portfolio.html#airease" data-b="box" data-name="Card / AirEase">
+              <div class="media" data-b="img"><img src="images/airease-stand.jpg" alt="AirEase laptop stand render" loading="lazy"></div>
+              <div class="card-row"><h3 data-b="type">AirEase Stand</h3><span class="mono">03</span></div>
+            </a>
+            <a class="card" href="portfolio.html#shoe-shelf" data-b="box" data-name="Card / Shoe Shelf">
+              <div class="media" data-b="img"><img src="images/shoe-shelf.jpg" alt="Wooden S-shaped shoe shelf" loading="lazy"></div>
+              <div class="card-row"><h3 data-b="type">Shoe Shelf</h3><span class="mono">04</span></div>
+            </a>
+            <a class="card" href="portfolio.html#water-dispenser" data-b="box" data-name="Card / Water Dispenser">
+              <div class="media" data-b="img"><img src="images/water-dispenser.jpg" alt="Universal water dispenser render" loading="lazy"></div>
+              <div class="card-row"><h3 data-b="type">Water Dispenser</h3><span class="mono">05</span></div>
+            </a>
+          </div>
+        </section>
+
+        <!-- ABOUT -->
+        <section class="sec" data-section="About" id="about">
+          <div class="about">
+            <div>
+              <span class="eyebrow" data-b="type" data-name="Eyebrow">About</span>
+              <div class="facts">
+                <div class="fact" data-b="box" data-name="Fact / Education"><span class="mono">Education</span><span data-b="type">B.Des, Department of Design, IIT Hyderabad</span></div>
+                <div class="fact" data-b="box" data-name="Fact / Disciplines"><span class="mono">Disciplines</span><span data-b="type">Product, Industrial, Furniture, UI/UX</span></div>
+                <div class="fact" data-b="box" data-name="Fact / Also"><span class="mono">Also explores</span><span data-b="type">Graphic, Publication, Data Viz, Photography</span></div>
+              </div>
+            </div>
+            <p class="about-big" data-b="type" data-name="Bio">I am an aspiring Product and Industrial Designer passionate about creating human-centered products that combine function, aesthetics, and sustainability. <em>I explore materials, forms, and user experiences to craft solutions that are practical, meaningful, and engaging.</em></p>
+          </div>
+        </section>
+
+        <!-- EXPERIENCE -->
+        <section class="sec" data-section="Experience" id="experience">
+          <div class="sec-head">
+            <div>
+              <span class="eyebrow" data-b="type" data-name="Eyebrow">Experience</span>
+              <h2 class="h-lg" data-b="type" data-mode="char" data-name="Heading">Leading teams</h2>
+            </div>
+          </div>
+          <div class="xp">
+            <div class="xp-row" data-b="box" data-name="Row / ServDES’25">
+              <div><h3 data-b="type">ServDES’25 Overall Head</h3><span class="mono" data-b="type">May – Nov 2025</span></div>
+              <p class="body" data-b="type">Managed a team of 58 volunteers, including 22 domain heads, coordinating across multiple teams to deliver the Service Design and Innovation conference 2025.</p>
+            </div>
+            <div class="xp-row" data-b="box" data-name="Row / ICoRD’25">
+              <div><h3 data-b="type">ICoRD’25 Exhibition &amp; Space Design Head</h3><span class="mono" data-b="type">May 2024 – Jan 2025</span></div>
+              <p class="body" data-b="type">Led a team of 8 volunteers to plan, design and execute the International Conference on Research into Design 2025 exhibition, covering setup, curation and visitor engagement.</p>
+            </div>
+            <div class="xp-row" data-b="box" data-name="Row / AYAAM’25">
+              <div><h3 data-b="type">AYAAM’25 Finance Head</h3><span class="mono" data-b="type">Mar – May 2025</span></div>
+              <p class="body" data-b="type">Managed budgeting, expense tracking and financial planning for the annual design fest AYAAM, coordinating with domains on resource allocation and sponsor funds.</p>
+            </div>
+            <div class="xp-row" data-b="box" data-name="Row / AYAAM’24">
+              <div><h3 data-b="type">AYAAM’24 Installations Coordinator</h3><span class="mono" data-b="type">Dec 2023 – Apr 2024</span></div>
+              <p class="body" data-b="type">Coordinated installations for the annual design fest AYAAM.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- CONTACT -->
+        <section class="sec" data-section="Contact" id="contact">
+          <div class="contact">
+            <span class="eyebrow" data-b="type" data-name="Eyebrow">Contact</span>
+            <h2 class="h-xl" data-b="type" data-mode="char" data-name="Heading">Let’s work<br>together.</h2>
+            <span class="rule" data-b="rule"></span>
+            <div class="contact-links">
+              <a class="btn solid" href="mailto:pranavkuchekar2105@gmail.com" data-b="box" data-name="Button / Email">pranavkuchekar2105@gmail.com</a>
+              <a class="btn" href="tel:+918308812191" data-b="box" data-name="Button / Phone">+91 83088 12191</a>
+            </div>
+          </div>
+        </section>
+
+        <footer class="foot" data-section="Footer">
+          <span class="mono" data-b="type">© 2026 Pranav Kuchekar</span>
+          <span class="mono" data-b="type" data-name="Credit">Built live by <span class="p">Pranav</span> &amp; <span class="c">Claude</span></span>
+        </footer>
+
+      </div>
     </div>
+  </main>
 
-    <div class="corner-text">Portfolio — 2025</div>
+  <div class="hud" role="status">
+    <div class="hud-who"><i style="background:var(--pranav)"></i><b>Pranav</b><span data-hud="pranav">Joining…</span></div>
+    <div class="hud-sep"></div>
+    <div class="hud-who"><i style="background:var(--claude)"></i><b>Claude</b><span data-hud="claude">Joining…</span></div>
+    <button type="button" id="lb-skip">Skip to final</button>
+  </div>
 
-    <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-        let mouse = { x: null, y: null, radius: 120 };
-
-        function init() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 1.8 + 0.3;
-                this.bx = (Math.random() - 0.5) * 0.4;
-                this.by = (Math.random() - 0.5) * 0.4;
-                this.sx = this.bx;
-                this.sy = this.by;
-                this.opacity = Math.random() * 0.4 + 0.15;
-            }
-            update() {
-                if (mouse.x !== null) {
-                    const dx = this.x - mouse.x, dy = this.y - mouse.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < mouse.radius) {
-                        const force = (mouse.radius - dist) / mouse.radius;
-                        this.sx = this.bx + (dx / dist) * force * 1.5;
-                        this.sy = this.by + (dy / dist) * force * 1.5;
-                    } else {
-                        this.sx += (this.bx - this.sx) * 0.04;
-                        this.sy += (this.by - this.sy) * 0.04;
-                    }
-                }
-                this.x += this.sx; this.y += this.sy;
-                if (this.x > canvas.width) this.x = 0;
-                if (this.x < 0) this.x = canvas.width;
-                if (this.y > canvas.height) this.y = 0;
-                if (this.y < 0) this.y = canvas.height;
-            }
-            draw() {
-                ctx.fillStyle = `rgba(255,255,255,${this.opacity})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        function createParticles() {
-            particles = [];
-            const n = Math.min((canvas.width * canvas.height) / 9000, 200);
-            for (let i = 0; i < n; i++) particles.push(new Particle());
-        }
-
-        function drawLines() {
-            for (let i = 0; i < particles.length; i++) {
-                for (let j = i + 1; j < particles.length; j++) {
-                    const dx = particles[i].x - particles[j].x;
-                    const dy = particles[i].y - particles[j].y;
-                    const d = dx*dx + dy*dy;
-                    if (d < 9000) {
-                        ctx.strokeStyle = `rgba(255,255,255,${0.035 * (1 - Math.sqrt(d) / 95)})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.beginPath();
-                        ctx.moveTo(particles[i].x, particles[i].y);
-                        ctx.lineTo(particles[j].x, particles[j].y);
-                        ctx.stroke();
-                    }
-                }
-            }
-        }
-
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (const p of particles) { p.update(); p.draw(); }
-            drawLines();
-            requestAnimationFrame(animate);
-        }
-
-        window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
-        window.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
-        window.addEventListener('resize', () => { init(); createParticles(); });
-
-        init(); createParticles(); animate();
-
-        function toggleContact() {
-            document.getElementById('contactCard').classList.toggle('active');
-        }
-
-        document.addEventListener('click', e => {
-            const card = document.getElementById('contactCard');
-            const trigger = document.querySelector('.contact-trigger');
-            if (!card.contains(e.target) && !trigger.contains(e.target) && card.classList.contains('active')) {
-                card.classList.remove('active');
-            }
-        });
-    </script>
+  <script>
+    window.LB_CHAT = [
+      ["Can we make my name bigger?", "Bumped the title up and tightened the tracking."],
+      ["Should IGH be the hero card?", "Done, it spans two columns now."],
+      ["Keep it monochrome?", "Yes, plus the one red rule from your deck."],
+      ["Is the contact easy to find?", "It’s in the toolbar and at the end ✓"],
+      ["Looks clean. Ship it?", "Ship it 🚀"]
+    ];
+  </script>
+  <script src="assets/live.js" defer></script>
 </body>
 </html>
