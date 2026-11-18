@@ -992,13 +992,13 @@
         const from = offsetOf(el);
         if ((!from.x && !from.y) || (drag && drag.el === el)) return;
         if (!inView(el)) { setOff(el, 0, 0); return; }
-        await moveTo(p, () => pt(el, "c"), rand(800, 1100));
+        await moveTo(p, () => pt(el, "c"), rand(750, 1050));
         if (drag && drag.el === el) return scheduleFix(el);
         click(p);
         select(p, el, "tl");
         p.sel.progress = 1;
-        await sleep(180);
-        const dur = clamp(Math.hypot(from.x, from.y) * 2.2, 500, 1200);
+        await sleep(130);
+        const dur = clamp(Math.hypot(from.x, from.y) * 2.2 - 50, 450, 1150);
         const t0 = performance.now();
         moveTo(p, () => pt(el, "c"), dur);
         await new Promise((res) => {
@@ -1011,10 +1011,10 @@
           requestAnimationFrame(step);
         });
         if (!(drag && drag.el === el)) setOff(el, 0, 0);
-        await sleep(260);
+        await sleep(210);
         deselect(p);
         const q = quietSpot();
-        if (q) await moveTo(p, () => q, rand(800, 1100));
+        if (q) await moveTo(p, () => q, rand(750, 1050));
       };
     }
 
