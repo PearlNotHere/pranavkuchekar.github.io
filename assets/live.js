@@ -375,6 +375,10 @@
     for (let i = queue.length - 1; i >= 0; i--) if (isBuilt(queue[i])) queue.splice(i, 1);
     return null;
   }
+  // work a cursor could pick up right now (skipped, off-screen sections don't count)
+  function hasWork() {
+    return queue.some((el) => !el.__busy && !isBuilt(el) && inView(el) && ancestorsBuilt(el));
+  }
   function requeue(el) {
     el.__busy = false;
     if (!queue.includes(el)) { queue.push(el); queue.sort((a, b) => a.__i - b.__i); }
@@ -614,7 +618,7 @@
   // wait, but wake early when there is new work
   async function calm(ms) {
     const until = performance.now() + ms;
-    while (performance.now() < until && !queue.length && !anyRequest()) await sleep(90);
+    while (performance.now() < until && !hasWork() && !anyRequest()) await sleep(90);
   }
 
   // a "quiet" spot has no text under the cursor or its name tag
@@ -637,6 +641,20 @@
         x = rand(LEFT() + 30, RIGHT() - 30); y = rand(TOP() + 30, innerHeight - 110);
       }
       const q = clampPt(x, y);
+      if (isQuiet(q.x, q.y)) return q;
+    }
+    return null;
+  }
+  // fallback: the page margins beside the content are always clear
+  function edgeSpot() {
+    const frame = document.querySelector(".frame-wrap");
+    const r = frame ? frame.getBoundingClientRect() : { left: 0, right: innerWidth };
+    const leftGap = r.left - LEFT(), rightGap = RIGHT() - r.right;
+    const y = rand(TOP() + 40, innerHeight - 120);
+    if (leftGap > 50) return clampPt(LEFT() + leftGap * rand(0.3, 0.7), y);
+    if (rightGap > 50) return clampPt(r.right + rightGap * rand(0.3, 0.7), y);
+    for (let i = 0; i < 20; i++) {
+      const q = clampPt(rand(LEFT() + 20, RIGHT() - 20), rand(TOP() + 30, innerHeight - 100));
       if (isQuiet(q.x, q.y)) return q;
     }
     return null;
@@ -713,13 +731,13 @@
       await calm(rand(5000, 9000));
     },
     async wander(p) {
-      const q = quietSpot();
+      const q = quietSpot() || edgeSpot();
       if (!q) return IDLE.away(p);
       await moveTo(p, () => q, rand(1400, 2200));
       await calm(rand(2000, 3400));
     },
   };
-  const WEIGHTS = { glance: 3, select: 2, measure: 1.5, rest: 2.5, visit: 1, away: 1, wander: 2 };
+  const WEIGHTS = { glance: 3, select: 2, measure: 1.5, rest: 1.5, visit: 1, away: 0.8, wander: 2.5 };
 
   function pickIdle(p) {
     const other = p === PRANAV ? CLAUDE : PRANAV;
@@ -778,7 +796,7 @@
     p.history.push(name);
     if (p.history.length > 6) p.history.shift();
     const ok = await IDLE[name](p);
-    if (ok === false) await IDLE.rest(p);
+    if (ok === false) await IDLE.wander(p);
     p.doing = null;
     p.focus = null;
   }
@@ -802,8 +820,6 @@
         p.doing = "build";
         try { await build(p, el); } catch (e) { el.__busy = false; instant(el); }
         p.doing = null;
-      } else if (queue.length) {
-        await sleep(80);
       } else {
         await idle(p);
       }
@@ -950,14 +966,16 @@
     function maybeDodge() {
       if (performance.now() - lastDodge < 5000) return;
       for (const p of PEOPLE) {
-        if (p.request || p.doing === "visitor" || p.doing === "chat") continue;
+        if (p.request || p.doing === "visitor" || p.doing === "chat" || p.doing === "build") continue;
         const building = items.some((el) => el.__busy && p.sel.target === el && el.classList.contains("is-building"));
         if (building) continue;
         if (Math.hypot(p.x - you.x, p.y - you.y) < 46) {
           lastDodge = performance.now();
-          const ang = Math.atan2(p.y - you.y, p.x - you.x) + rand(-0.6, 0.6);
-          const tx = p.x + Math.cos(ang) * 110, ty = p.y + Math.sin(ang) * 80;
+          const spin = rand(-0.6, 0.6);
+          if (p.tween) { const tw = p.tween; p.tween = null; tw.resolve(); }
           p.request = async (q) => {
+            const ang = Math.atan2(q.y - you.y, q.x - you.x) + spin;
+            const tx = q.x + Math.cos(ang) * 110, ty = q.y + Math.sin(ang) * 80;
             await moveTo(q, () => clampPt(tx, ty), 420);
             if (q === CLAUDE || Math.random() < 0.12) say(q, dodgeLines[Math.floor(Math.random() * dodgeLines.length)], 1800);
             await sleep(900);
@@ -993,6 +1011,7 @@
     });
     addEventListener("pointermove", (e) => {
       if (!drag) return;
+      if (e.buttons === 0) { endDrag(false); return; }
       const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
       if (!drag.moved && Math.hypot(dx, dy) < 6) return;
       if (!drag.moved) {
@@ -1007,19 +1026,24 @@
       hov.classList.add("show");
       placeYou();
     });
-    addEventListener("pointerup", () => {
+    function endDrag(fromRelease) {
       if (!drag) return;
       const d = drag;
       drag = null;
       root.classList.remove("you-dragging");
       d.el.classList.remove("you-held");
       if (!d.moved) return;
+      if (!fromRelease) { scheduleFix(d.el); return; }
       // a drag should not also count as a click on a link or button
       const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
       addEventListener("click", stop, { capture: true, once: true });
       setTimeout(() => removeEventListener("click", stop, { capture: true }), 60);
       scheduleFix(d.el);
-    });
+    }
+    addEventListener("pointerup", () => endDrag(true));
+    addEventListener("pointercancel", () => endDrag(false));
+    addEventListener("blur", () => endDrag(false));
+    document.addEventListener("mouseleave", () => endDrag(false));
 
     function scheduleFix(el) {
       clearTimeout(el.__fixT);
