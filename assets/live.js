@@ -30,7 +30,7 @@
   const FAST = PAGE_SPEED > 1;
   // long pages: cursors only type the text, everything else is already in place
   const TEXT_ONLY = document.body.dataset.build === "text";
-  const BASE_SPEED = Math.min((revisit ? 1.7 : 1) * PAGE_SPEED, 3.4);
+  const BASE_SPEED = Math.min((revisit ? 1.25 : 1) * PAGE_SPEED, 3.4);
 
   const items = [...document.querySelectorAll("[data-b]")];
   items.forEach((el, i) => (el.__i = i));
@@ -432,7 +432,9 @@
 
   async function build(p, el) {
     const type = el.dataset.b;
-    p.speed = BASE_SPEED * (queue.length > 8 ? 1.8 : queue.length > 4 ? 1.3 : 1) * rand(0.88, 1.15);
+    // only work that is on screen counts towards hurrying; skipped sections don't
+    const waiting = queue.filter((q) => inView(q)).length;
+    p.speed = BASE_SPEED * (waiting > 8 ? 1.35 : waiting > 4 ? 1.12 : 1) * rand(0.9, 1.1);
     const k = 1 / p.speed;
     status(p, `${VERB[type] || "Editing"} ${layerName(el)}`);
     el.classList.add("is-building");
@@ -440,7 +442,7 @@
     inspect(p, el);
 
     // now and then, overshoot a little before settling on the target
-    if (Math.random() < 0.18 && queue.length < 5) {
+    if (Math.random() < 0.18 && waiting < 5) {
       const q = pt(el, "c");
       const ox = rand(-90, 90), oy = rand(-50, 50);
       await moveTo(p, () => clampPt(q.x + ox, q.y + oy), rand(300, 450));
