@@ -533,7 +533,7 @@
     ["Love how the grid lines up.", "12 columns, 20px gutters ✓"],
     ["Ship it?", "Ship it 🚀"],
   ]).slice();
-  let nextChatAt = performance.now() + rand(10000, 16000) / BASE_SPEED;
+  let nextChatAt = performance.now() + rand(45000, 70000);
   let pendingReply = null;
 
   function visibleBuilt() {
@@ -572,111 +572,109 @@
     while (performance.now() < until && !queue.length && !anyRequest()) await sleep(90);
   }
 
+  // a "quiet" spot has no text under the cursor or its name tag
+  const TEXTY = '[data-b="type"], p, h1, h2, h3, .btn, .chip, .tag, .label, .link-arrow, .mono, .tb';
+  const PROBES = [[0, 0], [24, 12], [56, 26], [-12, -10], [30, 40], [80, 26]];
+  function isQuiet(x, y) {
+    for (const [dx, dy] of PROBES) {
+      const e = document.elementFromPoint(x + dx, y + dy);
+      if (e && e.closest && e.closest(TEXTY)) return false;
+    }
+    return true;
+  }
+  function quietSpot(near) {
+    for (let i = 0; i < 28; i++) {
+      let x, y;
+      if (near && i < 18) {
+        const r = near.getBoundingClientRect();
+        x = rand(r.left - 70, r.right + 40); y = rand(r.top - 50, r.bottom + 30);
+      } else {
+        x = rand(LEFT() + 30, RIGHT() - 30); y = rand(TOP() + 30, innerHeight - 110);
+      }
+      const q = clampPt(x, y);
+      if (isQuiet(q.x, q.y)) return q;
+    }
+    return null;
+  }
+  const notText = (e) => e.dataset.b !== "type" && e.dataset.b !== "rule";
+
   const IDLE = {
     async glance(p) {
-      const el = pickEl(p);
-      if (!el) return false;
-      const ox = rand(-60, 60), oy = rand(-20, 20);
-      await moveTo(p, () => { const q = pt(el, "c"); return clampPt(q.x + ox, q.y + oy); }, rand(1100, 1800));
-      await calm(rand(1400, 2600));
+      const q = quietSpot(pickEl(p, notText));
+      if (!q) return false;
+      await moveTo(p, () => q, rand(1200, 1900));
+      await calm(rand(1800, 3200));
     },
     async select(p) {
-      const el = pickEl(p);
+      // select an image or frame, but keep the cursor out on its edge
+      const el = pickEl(p, notText);
       if (!el) return false;
-      const where = Math.random() < 0.5 ? "tl" : "c";
-      await moveTo(p, () => pt(el, where), rand(900, 1400));
+      const q = quietSpot(el);
+      if (!q) return false;
+      await moveTo(p, () => q, rand(1000, 1500));
       click(p);
       select(p, el, "tl");
       p.sel.progress = 1;
-      await calm(rand(900, 1500));
+      await calm(rand(1000, 1600));
       deselect(p);
-      await calm(rand(800, 1600));
-    },
-    async read(p) {
-      // slowly trace across a paragraph, as if proof-reading it
-      const el = pickEl(p, (e) => e.dataset.b === "type" && e.getBoundingClientRect().height > 40);
-      if (!el) return false;
-      const lines = Math.min(3, Math.max(1, Math.round(el.getBoundingClientRect().height / 30)));
-      for (let i = 0; i < lines; i++) {
-        const f = (i + 0.6) / (lines + 0.2);
-        const end = rand(10, 60);
-        await moveTo(p, () => { const r = el.getBoundingClientRect(); return clampPt(r.left + 8, r.top + r.height * f + 10); }, i ? 420 : rand(900, 1300));
-        await moveTo(p, () => { const r = el.getBoundingClientRect(); return clampPt(r.right - end, r.top + r.height * f + 10); }, rand(1300, 1900));
-        if (queue.length) return;
-      }
-      await calm(rand(900, 1600));
+      await calm(rand(1000, 1800));
     },
     async measure(p) {
-      // check the gap between two stacked elements
-      const vis = visibleBuilt().filter((e) => e.dataset.b !== "rule");
+      // check the gap between two stacked frames or images
+      const vis = visibleBuilt().filter(notText);
       const pairs = [];
       for (let i = 0; i < vis.length - 1; i++) {
         const a = vis[i].getBoundingClientRect(), b = vis[i + 1].getBoundingClientRect();
         const gap = b.top - a.bottom;
-        if (gap >= 8 && gap < 220 && Math.abs((a.left + a.width / 2) - (b.left + b.width / 2)) < 400) pairs.push([vis[i], vis[i + 1]]);
+        if (gap >= 12 && gap < 220 && Math.abs((a.left + a.width / 2) - (b.left + b.width / 2)) < 400) pairs.push([vis[i], vis[i + 1]]);
       }
       if (!pairs.length) return false;
       const [A, B] = pairs[Math.floor(Math.random() * pairs.length)];
-      const ax = rand(0.25, 0.6);
-      const place = () => {
-        const a = A.getBoundingClientRect(), b = B.getBoundingClientRect();
-        const x = Math.max(a.left, b.left) + Math.min(a.width, b.width) * ax;
-        return { x, y1: a.bottom, y2: b.top };
-      };
-      await moveTo(p, () => { const m = place(); return clampPt(m.x + 6, (m.y1 + m.y2) / 2); }, rand(900, 1300));
+      const a = A.getBoundingClientRect(), b = B.getBoundingClientRect();
+      const x = Math.max(a.left, b.left) + Math.min(a.width, b.width) * rand(0.25, 0.6);
+      const spot = quietSpot(A) || null;
+      if (!spot) return false;
+      await moveTo(p, () => spot, rand(1000, 1400));
       measureEl.style.setProperty("--c", p.color);
-      const m = place();
-      measureEl.style.transform = `translate3d(${Math.round(m.x)}px, ${Math.round(m.y1)}px, 0)`;
-      measureEl.style.height = m.y2 - m.y1 + "px";
-      measureEl.querySelector("span").textContent = Math.round(m.y2 - m.y1);
+      measureEl.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(a.bottom)}px, 0)`;
+      measureEl.style.height = b.top - a.bottom + "px";
+      measureEl.querySelector("span").textContent = Math.round(b.top - a.bottom);
       measureEl.classList.add("show");
       await calm(rand(1300, 2000));
       measureEl.classList.remove("show");
-      await calm(rand(600, 1200));
-    },
-    async nudge(p) {
-      // pick something up, try it a few pixels over, put it back
-      const el = pickEl(p, (e) => e.getBoundingClientRect().height < 160);
-      if (!el) return false;
-      await moveTo(p, () => pt(el, "c"), rand(900, 1300));
-      click(p);
-      select(p, el, "tl");
-      p.sel.progress = 1;
-      const dx = rand(6, 12) * (Math.random() < 0.5 ? -1 : 1);
-      const start = { x: p.x, y: p.y };
-      el.animate([{ translate: "0 0" }, { translate: `${dx}px 0`, offset: 0.35 }, { translate: `${dx}px 0`, offset: 0.65 }, { translate: "0 0" }],
-        { duration: 1500, easing: "ease-in-out" });
-      await moveTo(p, () => ({ x: start.x + dx, y: start.y }), 520);
-      await sleep(460);
-      await moveTo(p, () => start, 520);
-      deselect(p);
       await calm(rand(800, 1400));
     },
     async rest() {
-      await calm(rand(2200, 4200));
+      await calm(rand(2600, 4800));
     },
     async visit(p) {
-      // drift over towards the other person, like pointing something out
+      // drift over towards the other person, if there is a clear spot near them
       const o = p === PRANAV ? CLAUDE : PRANAV;
-      const ox = rand(40, 80) * (Math.random() < 0.5 ? -1 : 1), oy = rand(30, 60);
-      const tx = o.x + ox, ty = o.y + oy;
-      await moveTo(p, () => clampPt(tx, ty), rand(1200, 1700));
-      await calm(rand(1200, 2200));
+      for (let i = 0; i < 10; i++) {
+        const q = clampPt(o.x + rand(-110, 110), o.y + rand(-80, 80));
+        if (isQuiet(q.x, q.y) && Math.hypot(q.x - o.x, q.y - o.y) > 60) {
+          await moveTo(p, () => q, rand(1200, 1700));
+          await calm(rand(1400, 2400));
+          return;
+        }
+      }
+      return false;
     },
     async away(p) {
-      // step away from the screen for a moment, then come back
+      // step off screen for a moment, then come back
       const right = Math.random() < 0.5;
       const y = rand(TOP() + 80, innerHeight - 160);
       await moveTo(p, () => ({ x: right ? innerWidth + 60 : -60, y }), rand(900, 1300));
-      await calm(rand(4000, 8000));
+      await calm(rand(5000, 9000));
     },
     async wander(p) {
-      const x = rand(LEFT() + 60, RIGHT() - 60), y = rand(TOP() + 60, innerHeight - 140);
-      await moveTo(p, () => clampPt(x, y), rand(1400, 2200));
-      await calm(rand(1600, 3000));
+      const q = quietSpot();
+      if (!q) return IDLE.away(p);
+      await moveTo(p, () => q, rand(1400, 2200));
+      await calm(rand(2000, 3400));
     },
   };
-  const WEIGHTS = { glance: 3, select: 2, read: 2, measure: 2, nudge: 1.5, rest: 2, visit: 1, away: 0.6, wander: 1.5 };
+  const WEIGHTS = { glance: 3, select: 2, measure: 1.5, rest: 2.5, visit: 1, away: 1, wander: 2 };
 
   function pickIdle(p) {
     const other = p === PRANAV ? CLAUDE : PRANAV;
@@ -696,32 +694,35 @@
 
   async function idle(p) {
     p.speed = 1;
+    // finished building here? get off the text first
+    if (!isQuiet(p.x, p.y)) {
+      const q = quietSpot();
+      if (q) await moveTo(p, () => q, rand(700, 1000));
+    }
     // Claude answers a pending comment first
     if (p === CLAUDE && pendingReply && performance.now() > pendingReply.at) {
-      const { el, text } = pendingReply;
+      const { spot, text } = pendingReply;
       pendingReply = null;
-      if (inView(el)) {
+      const q = quietSpot({ getBoundingClientRect: () => ({ left: spot.x - 40, right: spot.x + 120, top: spot.y + 30, bottom: spot.y + 90 }) });
+      if (q) {
         p.doing = "reply";
-        const ox = rand(50, 90), oy = rand(20, 50);
-        await moveTo(p, () => { const q = pt(el, "c"); return clampPt(q.x + ox, q.y + oy); });
-        if (Math.random() < 0.5) { select(p, el, "tl"); p.sel.progress = 1; }
+        await moveTo(p, () => q);
         say(p, text);
-        await calm(1700);
-        deselect(p);
+        await calm(1800);
         p.doing = null;
         return;
       }
     }
-    // Pranav starts a conversation now and then
+    // Pranav starts a conversation, rarely
     if (p === PRANAV && !pendingReply && performance.now() > nextChatAt) {
-      const el = pickEl(p);
-      if (el) {
+      const q = quietSpot(pickEl(p, notText));
+      if (q) {
         p.doing = "chat";
         const [ask, reply] = nextChat();
-        await moveTo(p, () => pt(el, "c"));
+        await moveTo(p, () => q);
         say(p, ask);
-        pendingReply = { el, text: reply, at: performance.now() + rand(900, 1500) };
-        nextChatAt = performance.now() + rand(20000, 34000);
+        pendingReply = { spot: q, text: reply, at: performance.now() + rand(900, 1500) };
+        nextChatAt = performance.now() + rand(75000, 120000);
         await calm(1900);
         p.doing = null;
         return;
@@ -732,7 +733,7 @@
     p.history.push(name);
     if (p.history.length > 6) p.history.shift();
     const ok = await IDLE[name](p);
-    if (ok === false) await IDLE.wander(p);
+    if (ok === false) await IDLE.rest(p);
     p.doing = null;
     p.focus = null;
   }
@@ -856,17 +857,12 @@
         if (!h) return;
         h.request = async (p) => {
           await moveTo(p, nearYou(70, 34), 1000);
-          say(p, "Hi 👋 you’re in the file with us!", 3000);
-          await sleep(1400);
-          const o = p === PRANAV ? CLAUDE : PRANAV;
-          if (!o.request) o.request = async (q) => {
-            await moveTo(q, nearYou(-150, 50), 1100);
-            say(q, "Press / to chat with us", 3400);
-            hint.classList.add("show");
-            setTimeout(() => hint.classList.remove("show"), 7000);
-            await sleep(1600);
-          };
-          await sleep(900);
+          say(p, "Hi 👋 you’re in the file with us!", 2600);
+          await sleep(2800);
+          say(p, "Try dragging things around, or press / to chat", 3600);
+          hint.classList.add("show");
+          setTimeout(() => hint.classList.remove("show"), 7000);
+          await sleep(1800);
         };
       }, 2200);
     }
@@ -888,7 +884,7 @@
       if (!card || performance.now() - lastLinger < 14000) return;
       lingerT = setTimeout(() => {
         const line = lingerLines();
-        const h = helper();
+        const h = helper(CLAUDE);
         if (!line || !h || lingerEl !== card) return;
         lastLinger = performance.now();
         h.request = async (p) => {
@@ -914,7 +910,7 @@
           const tx = p.x + Math.cos(ang) * 110, ty = p.y + Math.sin(ang) * 80;
           p.request = async (q) => {
             await moveTo(q, () => clampPt(tx, ty), 420);
-            say(q, dodgeLines[Math.floor(Math.random() * dodgeLines.length)], 1800);
+            if (q === CLAUDE || Math.random() < 0.12) say(q, dodgeLines[Math.floor(Math.random() * dodgeLines.length)], 1800);
             await sleep(900);
           };
           break;
@@ -922,10 +918,106 @@
       }
     }
 
+    /* --- 5. grab things and move them; the team quietly puts them back --- */
+    const DRAG_SKIP = ".tb, .you-chat, input, textarea, select";
+    let drag = null;
+    function draggableAt(t) {
+      if (!t || !t.closest || t.closest(DRAG_SKIP)) return null;
+      const el = t.closest("[data-b].is-built");
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return r.height < innerHeight * 0.8 && r.width < innerWidth * 0.96 ? el : null;
+    }
+    const offsetOf = (el) => el.__off || { x: 0, y: 0 };
+    function setOff(el, x, y) {
+      el.__off = { x, y };
+      el.style.translate = Math.abs(x) + Math.abs(y) > 0.5 ? `${x}px ${y}px` : "";
+      if (el === hovEl) placeYou();
+    }
+    document.addEventListener("dragstart", (e) => { if (draggableAt(e.target)) e.preventDefault(); });
+    document.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      const el = draggableAt(e.target);
+      if (!el) return;
+      const o = offsetOf(el);
+      drag = { el, sx: e.clientX, sy: e.clientY, ox: o.x, oy: o.y, moved: false };
+    });
+    addEventListener("pointermove", (e) => {
+      if (!drag) return;
+      const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+      if (!drag.moved && Math.hypot(dx, dy) < 6) return;
+      if (!drag.moved) {
+        drag.moved = true;
+        root.classList.add("you-dragging");
+        drag.el.classList.add("you-held");
+        clearTimeout(drag.el.__fixT);
+        try { getSelection().removeAllRanges(); } catch (err) {}
+      }
+      setOff(drag.el, drag.ox + dx, drag.oy + dy);
+      hovEl = drag.el;
+      hov.classList.add("show");
+      placeYou();
+    });
+    addEventListener("pointerup", () => {
+      if (!drag) return;
+      const d = drag;
+      drag = null;
+      root.classList.remove("you-dragging");
+      d.el.classList.remove("you-held");
+      if (!d.moved) return;
+      // a drag should not also count as a click on a link or button
+      const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
+      addEventListener("click", stop, { capture: true, once: true });
+      setTimeout(() => removeEventListener("click", stop, { capture: true }), 60);
+      scheduleFix(d.el);
+    });
+
+    function scheduleFix(el) {
+      clearTimeout(el.__fixT);
+      el.__fixT = setTimeout(() => tryFix(el), rand(2800, 5500));
+    }
+    function tryFix(el) {
+      const o = offsetOf(el);
+      if (!o.x && !o.y) return;
+      if (drag && drag.el === el) return scheduleFix(el);
+      // nobody is looking at it? just put it back
+      if (!inView(el)) { setOff(el, 0, 0); return; }
+      const h = helper();
+      if (!h) return scheduleFix(el);
+      h.request = async (p) => {
+        const from = offsetOf(el);
+        if ((!from.x && !from.y) || (drag && drag.el === el)) return;
+        if (!inView(el)) { setOff(el, 0, 0); return; }
+        await moveTo(p, () => pt(el, "c"), rand(800, 1100));
+        if (drag && drag.el === el) return scheduleFix(el);
+        click(p);
+        select(p, el, "tl");
+        p.sel.progress = 1;
+        await sleep(180);
+        const dur = clamp(Math.hypot(from.x, from.y) * 2.2, 500, 1200);
+        const t0 = performance.now();
+        moveTo(p, () => pt(el, "c"), dur);
+        await new Promise((res) => {
+          const step = (now) => {
+            if (drag && drag.el === el) return res();
+            const t = clamp((now - t0) / dur, 0, 1), e = easeInOut(t);
+            setOff(el, from.x * (1 - e), from.y * (1 - e));
+            if (t < 1) requestAnimationFrame(step); else res();
+          };
+          requestAnimationFrame(step);
+        });
+        if (!(drag && drag.el === el)) setOff(el, 0, 0);
+        await sleep(260);
+        deselect(p);
+        const q = quietSpot();
+        if (q) await moveTo(p, () => q, rand(800, 1100));
+      };
+    }
+
     /* --- 4. cursor chat: press / and type --- */
     const hint = document.createElement("div");
     hint.className = "you-hint";
-    hint.innerHTML = "Press <kbd>/</kbd> to chat with Pranav &amp; Claude";
+    hint.innerHTML = "Drag anything around · press <kbd>/</kbd> to chat";
     document.body.appendChild(hint);
 
     const chatBox = document.createElement("div");
@@ -969,7 +1061,7 @@
       chatIn.blur();
       setTimeout(closeChat, 4200);
       const answer = replyTo(msg);
-      const h = helper(Math.random() < 0.5 ? PRANAV : CLAUDE) || helper();
+      const h = helper(Math.random() < 0.85 ? CLAUDE : PRANAV) || helper();
       if (h) h.request = async (p) => {
         await moveTo(p, nearYou(rand(60, 100), rand(50, 80)), 800);
         say(p, answer, 3400);

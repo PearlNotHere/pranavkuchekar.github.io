@@ -591,3 +591,10 @@ html.lb [data-b="rule"].is-built.popped { animation: lb-rule .6s var(--ease-out)
   background: #2fbf71; color: #06210f;
 }
 @media (hover: none) { .you-tag, .you-hover, .you-chat, .you-hint { display: none !important; } }
+
+/* Visitors can pick things up */
+@media (hover: hover) and (pointer: fine) {
+  html.lb [data-b].is-built:not(a):not(.btn) { cursor: grab; }
+}
+html.you-dragging, html.you-dragging * { cursor: grabbing !important; user-select: none !important; -webkit-user-select: none !important; }
+.you-held { position: relative; z-index: 5; filter: drop-shadow(0 14px 26px rgba(0,0,0,.55)); }
