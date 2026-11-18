@@ -1094,10 +1094,16 @@
   /* ---------------- Go ---------------- */
   const start = () => {
     if (TEXT_ONLY) {
-      // frames, images, buttons and lines appear well before they scroll into view
+      // frames, images, buttons and lines build themselves as they scroll in
+      const reveal = (el) => {
+        if (isBuilt(el)) return;
+        if (!ancestorsBuilt(el)) { const parent = el.parentElement.closest("[data-b]"); if (parent) reveal(parent); }
+        instant(el);
+        el.classList.add(el.dataset.b === "img" ? "dropped" : "popped");
+      };
       const pre = new IntersectionObserver(
-        (entries) => entries.forEach((en) => { if (en.isIntersecting) { instant(en.target); pre.unobserve(en.target); } }),
-        { rootMargin: "900px 0px 900px 0px", threshold: 0 }
+        (entries) => entries.forEach((en) => { if (en.isIntersecting) { reveal(en.target); pre.unobserve(en.target); } }),
+        { rootMargin: "0px 0px -6% 0px", threshold: 0 }
       );
       items.forEach((el) => (el.dataset.b === "type" ? io.observe(el) : pre.observe(el)));
     } else {
