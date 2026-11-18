@@ -1052,6 +1052,9 @@
     mp.appendChild(chatBox);
     const chatIn = chatBox.querySelector("input");
 
+    // the chat bubble never lingers: it closes when idle, when you click away, or after sending
+    let chatTimer = null;
+    function closeChatIn(ms) { clearTimeout(chatTimer); chatTimer = setTimeout(closeChat, ms); }
     function openChat() {
       if (you.x < 0) { you.x = innerWidth / 2; you.y = innerHeight / 2; }
       chatBox.classList.add("show");
@@ -1061,8 +1064,10 @@
       placeYou();
       chatIn.focus({ preventScroll: true });
       hint.classList.remove("show");
+      closeChatIn(6000);
     }
     function closeChat() {
+      clearTimeout(chatTimer);
       chatBox.classList.remove("show", "said");
       chatIn.blur();
     }
@@ -1078,13 +1083,13 @@
     chatIn.addEventListener("keydown", (e) => {
       e.stopPropagation();
       if (e.key === "Escape") { closeChat(); return; }
-      if (e.key !== "Enter") return;
+      if (e.key !== "Enter") { closeChatIn(6000); return; }
       const msg = chatIn.value.trim();
       if (!msg) { closeChat(); return; }
       chatIn.readOnly = true;
       chatBox.classList.add("said");
       chatIn.blur();
-      setTimeout(closeChat, 4200);
+      closeChatIn(4000);
       const answer = replyTo(msg);
       const h = helper(Math.random() < 0.85 ? CLAUDE : PRANAV) || helper();
       if (h) h.request = async (p) => {
@@ -1092,6 +1097,10 @@
         say(p, answer, 3400);
         await sleep(1500);
       };
+    });
+    chatIn.addEventListener("input", () => closeChatIn(6000));
+    chatIn.addEventListener("blur", () => {
+      if (!chatBox.classList.contains("said")) closeChatIn(250);
     });
     addEventListener("keydown", (e) => {
       if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
