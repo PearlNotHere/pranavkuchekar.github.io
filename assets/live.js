@@ -387,7 +387,10 @@
     return pick;
   }
   function click(p) {
-    p.el.animate([{ scale: 1 }, { scale: 0.82 }, { scale: 1 }], { duration: 220, easing: "ease-out" });
+    // pulse only the arrow: scaling the whole cursor would also scale its screen position
+    const arrow = p.el.querySelector("svg");
+    arrow.animate([{ transform: "scale(1)" }, { transform: "scale(0.82)" }, { transform: "scale(1)" }],
+      { duration: 220, easing: "ease-out" });
   }
   function ghostFor(p, el) {
     const img = el.querySelector("img");
@@ -745,6 +748,7 @@
         const job = p.request;
         p.request = null;
         p.doing = "visitor";
+        p.speed = 1;
         try { await job(p); } catch (e) {}
         p.doing = null;
         continue;
