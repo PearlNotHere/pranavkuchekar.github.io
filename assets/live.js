@@ -28,6 +28,8 @@
   // pages can ask for a faster build (the portfolio pages are long and image-heavy)
   const PAGE_SPEED = parseFloat(document.body.dataset.speed) || 1;
   const FAST = PAGE_SPEED > 1;
+  // long pages: cursors only type the text, everything else is already in place
+  const TEXT_ONLY = document.body.dataset.build === "text";
   const BASE_SPEED = Math.min((revisit ? 1.7 : 1) * PAGE_SPEED, 3.4);
 
   const items = [...document.querySelectorAll("[data-b]")];
@@ -436,7 +438,7 @@
     }
 
     if (type === "type") {
-      const style = pickStyle(p, "type", ["click", "box"]);
+      const style = TEXT_ONLY ? "click" : pickStyle(p, "type", ["click", "box"]);
       if (style === "box") {
         // drag out a text box first, then type into it
         await moveTo(p, () => pt(el, "tl"));
@@ -1091,7 +1093,16 @@
 
   /* ---------------- Go ---------------- */
   const start = () => {
-    items.forEach((el) => io.observe(el));
+    if (TEXT_ONLY) {
+      // frames, images, buttons and lines appear well before they scroll into view
+      const pre = new IntersectionObserver(
+        (entries) => entries.forEach((en) => { if (en.isIntersecting) { instant(en.target); pre.unobserve(en.target); } }),
+        { rootMargin: "900px 0px 900px 0px", threshold: 0 }
+      );
+      items.forEach((el) => (el.dataset.b === "type" ? io.observe(el) : pre.observe(el)));
+    } else {
+      items.forEach((el) => io.observe(el));
+    }
     worker(PRANAV, 150);
     worker(CLAUDE, 450);
   };
