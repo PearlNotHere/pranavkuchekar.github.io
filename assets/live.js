@@ -757,7 +757,9 @@
       const el = take();
       if (el) {
         if (!inView(el)) { el.__busy = false; instant(el); continue; }
+        p.doing = "build";
         try { await build(p, el); } catch (e) { el.__busy = false; instant(el); }
+        p.doing = null;
       } else if (queue.length) {
         await sleep(80);
       } else {
@@ -788,7 +790,8 @@
     // whoever is free; never pull someone off a build
     const free = PEOPLE.filter((p) => !p.request && p.doing !== "visitor" && p.doing !== "chat" && p.doing !== "reply");
     if (prefer && free.includes(prefer)) return prefer;
-    return free.sort((a, b) => (a.doing ? 1 : 0) - (b.doing ? 1 : 0))[0] || null;
+    const rank = (p) => (p.doing === "build" ? 2 : p.doing ? 1 : 0);
+    return free.sort((a, b) => rank(a) - rank(b))[0] || null;
   }
   function nearYou(ox, oy) { return () => clampPt(you.x + ox, you.y + oy); }
   const once = (arr) => { const a = arr.slice().sort(() => Math.random() - 0.5); return () => (a.length ? a.pop() : null); };
@@ -978,7 +981,7 @@
 
     function scheduleFix(el) {
       clearTimeout(el.__fixT);
-      el.__fixT = setTimeout(() => tryFix(el), rand(2800, 5500));
+      el.__fixT = setTimeout(() => tryFix(el), rand(600, 900));
     }
     function tryFix(el) {
       const o = offsetOf(el);
@@ -988,17 +991,19 @@
       if (!inView(el)) { setOff(el, 0, 0); return; }
       const h = helper();
       if (!h) return scheduleFix(el);
+      // an idle cursor drops whatever it was drifting towards and comes straight over
+      if (h.doing !== "build" && h.tween) { const tw = h.tween; h.tween = null; tw.resolve(); }
       h.request = async (p) => {
         const from = offsetOf(el);
         if ((!from.x && !from.y) || (drag && drag.el === el)) return;
         if (!inView(el)) { setOff(el, 0, 0); return; }
-        await moveTo(p, () => pt(el, "c"), rand(750, 1050));
+        await moveTo(p, () => pt(el, "c"), rand(480, 640));
         if (drag && drag.el === el) return scheduleFix(el);
         click(p);
         select(p, el, "tl");
         p.sel.progress = 1;
-        await sleep(130);
-        const dur = clamp(Math.hypot(from.x, from.y) * 2.2 - 50, 450, 1150);
+        await sleep(80);
+        const dur = clamp(Math.hypot(from.x, from.y) * 1.4, 380, 720);
         const t0 = performance.now();
         moveTo(p, () => pt(el, "c"), dur);
         await new Promise((res) => {
@@ -1011,7 +1016,7 @@
           requestAnimationFrame(step);
         });
         if (!(drag && drag.el === el)) setOff(el, 0, 0);
-        await sleep(210);
+        await sleep(140);
         deselect(p);
         const q = quietSpot();
         if (q) await moveTo(p, () => q, rand(750, 1050));
