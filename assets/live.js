@@ -925,6 +925,12 @@
           say(p, "Hi 👋 you’re in the file with us!", 2600);
           await sleep(2800);
           say(p, "Try dragging things around, or press / to chat", 3600);
+          if (!PRANAV.request && PRANAV.doing !== "build") PRANAV.request = async (q) => {
+            await sleep(700);
+            await moveTo(q, nearYou(-160, 60), 1000);
+            say(q, "Hey, I’m Pranav 👋 welcome!", 2800);
+            await sleep(1400);
+          };
           hint.classList.add("show");
           setTimeout(() => hint.classList.remove("show"), 7000);
           await sleep(1800);
@@ -934,11 +940,12 @@
 
     /* --- 2. a comment when you linger on a project --- */
     const lingerLines = once([
-      "Good pick, click to open it ↗",
-      "This one’s a favourite 👀",
-      "There are more slides in Portfolio 2",
-      "Take your time, we’re still building 🛠️",
-      "Pranav loved making this one",
+      { who: CLAUDE, text: "Good pick, click to open it ↗" },
+      { who: PRANAV, text: "This one’s a favourite of mine 👀" },
+      { who: CLAUDE, text: "There are more slides in Portfolio 2" },
+      { who: PRANAV, text: "I loved making this one 😊" },
+      { who: CLAUDE, text: "Take your time, we’re still building 🛠️" },
+      { who: PRANAV, text: "Ask me about this one via Contact ✉️" },
     ]);
     let lingerT = null, lingerEl = null, lastLinger = 0;
     function watchLinger(target) {
@@ -949,12 +956,13 @@
       if (!card || performance.now() - lastLinger < 14000) return;
       lingerT = setTimeout(() => {
         const line = lingerLines();
-        const h = helper(CLAUDE);
-        if (!line || !h || lingerEl !== card) return;
+        if (!line || lingerEl !== card) return;
+        const h = helper(line.who) === line.who ? line.who : null;
+        if (!h) return;
         lastLinger = performance.now();
         h.request = async (p) => {
           await moveTo(p, nearYou(rand(50, 90), rand(-70, -40)), 900);
-          say(p, line, 2800);
+          say(p, line.text, 2800);
           await sleep(1600);
         };
       }, 1300);
@@ -977,7 +985,7 @@
             const ang = Math.atan2(q.y - you.y, q.x - you.x) + spin;
             const tx = q.x + Math.cos(ang) * 110, ty = q.y + Math.sin(ang) * 80;
             await moveTo(q, () => clampPt(tx, ty), 420);
-            if (q === CLAUDE || Math.random() < 0.12) say(q, dodgeLines[Math.floor(Math.random() * dodgeLines.length)], 1800);
+            if (q === CLAUDE || Math.random() < 0.5) say(q, dodgeLines[Math.floor(Math.random() * dodgeLines.length)], 1800);
             await sleep(900);
           };
           break;
@@ -1121,14 +1129,52 @@
       chatBox.classList.remove("show", "said");
       chatIn.blur();
     }
+    // who answers depends on what was said: Pranav for anything personal, Claude for the site and AI
+    const pick = (a) => a[Math.floor(Math.random() * a.length)];
     function replyTo(msg) {
       const m = msg.toLowerCase();
-      if (/\b(hi|hello|hey|hii+|yo|namaste)\b/.test(m)) return "Hey! 👋 Glad you dropped by";
-      if (/(hire|job|intern|work with|collab|freelance|opportunit|role)/.test(m)) return "Love that! Pranav’s email is in Contact ✉️";
-      if (/(nice|love|cool|great|awesome|amazing|beautiful|wow|fire|sick|good)/.test(m)) return "Thank you! 🙌 That means a lot";
-      if (/(who|claude|ai|bot)/.test(m)) return "I’m Claude, I helped Pranav build this 🤝";
-      if (/\?$/.test(m)) return "Good question! Ask Pranav via Contact 😊";
-      return "Noted! Pranav will see this 😊";
+      if (/\b(hi|hello|hey|hii+|yo|namaste|hola|sup)\b/.test(m))
+        return { who: PRANAV, text: pick(["Hey! I’m Pranav 👋 thanks for stopping by", "Hi there! 👋 Have a look around", "Hello! 😊 Glad you’re here"]),
+                 also: { who: CLAUDE, text: pick(["And I’m Claude 🤝", "Hi from me too 👋"]) } };
+      if (/(hire|job|intern|work with|collab|freelance|opportunit|role|project for)/.test(m))
+        return { who: PRANAV, text: "I’d love to chat! My email is in Contact ✉️" };
+      if (/(nice|love|cool|great|awesome|amazing|beautiful|wow|fire|sick|good|clean|neat)/.test(m))
+        return { who: PRANAV, text: pick(["Thank you so much! 🙌", "That means a lot, thanks! 😊", "Glad you like it! 🙏"]) };
+      if (/(claude|\bai\b|bot|robot|who built|how.*built|code)/.test(m))
+        return { who: CLAUDE, text: "I’m Claude, I helped Pranav build this 🤝" };
+      if (/(who are you|your name|about you|pranav)/.test(m))
+        return { who: PRANAV, text: "I’m Pranav, a designer at IIT Hyderabad 👋" };
+      if (/(bye|thanks|thank you|thx|ty)\b/.test(m))
+        return { who: PRANAV, text: pick(["Thanks for visiting! 👋", "Anytime! Come back soon 😊"]) };
+      if (/\?\s*$/.test(m))
+        return { who: Math.random() < 0.5 ? PRANAV : CLAUDE, text: "Good question! Drop me a line via Contact 😊" };
+      return Math.random() < 0.5
+        ? { who: PRANAV, text: "Noted! I’ll take a look 😊" }
+        : { who: CLAUDE, text: "Noted! Pranav will see this 😊" };
+    }
+    function answer(r) {
+      // the right person answers, even if they finish a quick build step first
+      let h = r.who;
+      if (h.request) h = h === PRANAV ? CLAUDE : PRANAV;
+      if (h.request) return;
+      const text = h === r.who ? r.text : (r.who === PRANAV ? "Pranav’s mid-build, he says hi 😊" : r.text);
+      if (h.doing !== "build" && h.tween) { const tw = h.tween; h.tween = null; tw.resolve(); }
+      h.request = async (p) => {
+        await moveTo(p, nearYou(rand(60, 100), rand(50, 80)), 800);
+        say(p, text, 3400);
+        await sleep(1500);
+      };
+      if (r.also) {
+        setTimeout(() => {
+          const o = r.also.who;
+          if (o.request || o.doing === "visitor" || o.doing === "build") return;
+          o.request = async (q) => {
+            await moveTo(q, nearYou(rand(-170, -120), rand(40, 70)), 900);
+            say(q, r.also.text, 2600);
+            await sleep(1200);
+          };
+        }, 1400);
+      }
     }
     chatIn.addEventListener("keydown", (e) => {
       e.stopPropagation();
@@ -1140,13 +1186,7 @@
       chatBox.classList.add("said");
       chatIn.blur();
       closeChatIn(4000);
-      const answer = replyTo(msg);
-      const h = helper(Math.random() < 0.85 ? CLAUDE : PRANAV) || helper();
-      if (h) h.request = async (p) => {
-        await moveTo(p, nearYou(rand(60, 100), rand(50, 80)), 800);
-        say(p, answer, 3400);
-        await sleep(1500);
-      };
+      answer(replyTo(msg));
     });
     chatIn.addEventListener("input", () => closeChatIn(6000));
     chatIn.addEventListener("blur", () => {
