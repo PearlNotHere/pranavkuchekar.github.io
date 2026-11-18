@@ -521,3 +521,73 @@ html.lb [data-b="rule"].is-built.popped { animation: lb-rule .6s var(--ease-out)
 .skill h3 { font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
 .skill-wide { grid-column: 1 / -1; }
 @media (max-width: 760px) { .skills { grid-template-columns: 1fr; } }
+
+/* Image being carried in by a cursor */
+.ghost {
+  position: absolute; left: 0; top: 0; width: 84px; height: 60px; border-radius: 6px;
+  background: #222 center / cover no-repeat; border: 2px solid #fff;
+  box-shadow: 0 10px 24px rgba(0,0,0,.5); opacity: .92;
+  transition: opacity .3s, scale .3s;
+}
+.ghost.gone { opacity: 0; scale: .6; }
+
+/* Spacing measurement between two elements */
+.measure {
+  position: absolute; left: 0; top: 0; width: 1px; background: var(--c, #e5484d);
+  opacity: 0; transition: opacity .25s;
+}
+.measure.show { opacity: 1; }
+.measure::before, .measure::after {
+  content: ""; position: absolute; left: -4px; width: 9px; height: 1px; background: var(--c, #e5484d);
+}
+.measure::before { top: 0; } .measure::after { bottom: 0; }
+.measure span {
+  position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+  font: 600 10px/1 var(--f-ui); color: #fff; background: var(--c, #e5484d); padding: 3px 5px; border-radius: 3px;
+}
+
+/* ---------------- The visitor ("You") ---------------- */
+.you-tag {
+  position: absolute; left: 0; top: 0; white-space: nowrap;
+  font: 600 11px/1 var(--f-ui); color: #fff; padding: 5px 8px; border-radius: 4px 10px 10px 10px;
+  background: var(--c); box-shadow: 0 4px 12px rgba(0,0,0,.35);
+  opacity: 0; transition: opacity .3s;
+}
+.you-tag.show { opacity: 1; }
+.you-hover {
+  position: absolute; left: 0; top: 0; border: 1px solid var(--c); border-radius: 3px;
+  opacity: 0; transition: opacity .2s;
+}
+.you-hover.show { opacity: .9; }
+.you-hover span {
+  position: absolute; left: -1px; top: -18px; white-space: nowrap;
+  font: 600 10px/1 var(--f-ui); color: var(--c);
+}
+.you-ripple {
+  position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%;
+  border: 2px solid var(--c); animation: you-ripple .55s ease-out forwards;
+}
+@keyframes you-ripple { to { transform: scale(4); opacity: 0; } }
+.you-chat {
+  position: absolute; left: 0; top: 0; pointer-events: auto; display: none;
+}
+.you-chat.show { display: block; }
+.you-chat input {
+  width: 220px; border: 0; outline: 0; border-radius: 4px 14px 14px 14px;
+  background: var(--c); color: #fff; padding: 10px 13px; font: 500 13px/1.3 var(--f-ui);
+  box-shadow: 0 8px 22px rgba(0,0,0,.4);
+}
+.you-chat input::placeholder { color: rgba(255,255,255,.75); }
+.you-chat.said input { cursor: default; }
+.you-hint {
+  position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 12px); z-index: 75;
+  font: 500 13px/1 var(--f-ui); color: #e9e9e9; padding: 10px 14px; border-radius: 999px;
+  background: rgba(24,24,24,.9); border: 1px solid var(--hair); backdrop-filter: blur(10px);
+  opacity: 0; pointer-events: none; transition: opacity .35s, transform .45s var(--ease-out);
+}
+.you-hint.show { opacity: 1; transform: translate(-50%, 0); }
+.you-hint kbd {
+  font: 600 12px/1 var(--f-mono); padding: 3px 7px; margin: 0 3px; border-radius: 5px;
+  background: #2fbf71; color: #06210f;
+}
+@media (hover: none) { .you-tag, .you-hover, .you-chat, .you-hint { display: none !important; } }

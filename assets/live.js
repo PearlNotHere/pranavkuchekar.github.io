@@ -230,12 +230,16 @@
         if (t >= 1) { p.tween = null; tw.resolve(); }
       }
       p.el.style.transform = `translate3d(${Math.round(p.x - 3)}px, ${Math.round(p.y - 2)}px, 0)`;
+      if (p.ghost) p.ghost.style.transform = `translate3d(${Math.round(p.x + 10)}px, ${Math.round(p.y + 12)}px, 0)`;
 
       const s = p.sel;
       if (s.target) {
         const r = s.target.getBoundingClientRect();
         const w = r.width * s.progress, h = r.height * s.progress;
-        s.el.style.transform = `translate3d(${r.left - 1}px, ${r.top - 1}px, 0)`;
+        let sx = r.left, sy = r.top;
+        if (s.origin === "br") { sx = r.right - w; sy = r.bottom - h; }
+        else if (s.origin === "c") { sx = r.left + (r.width - w) / 2; sy = r.top + (r.height - h) / 2; }
+        s.el.style.transform = `translate3d(${sx - 1}px, ${sy - 1}px, 0)`;
         s.el.style.width = w + 2 + "px";
         s.el.style.height = h + 2 + "px";
         s.size.textContent = Math.round(w) + " × " + Math.round(h);
@@ -251,8 +255,9 @@
   }
   requestAnimationFrame(frame);
 
-  function select(p, el) {
+  function select(p, el, origin = "tl") {
     const s = p.sel;
+    s.origin = origin;
     s.target = el;
     s.progress = 0;
     s.name.textContent = layerName(el);
@@ -373,50 +378,141 @@
 
   const VERB = { type: "Typing", img: "Placing", box: "Drawing", rule: "Drawing" };
 
+  // pick a style that this cursor did not use last time for this kind of element
+  function pickStyle(p, kind, styles) {
+    p.lastStyle = p.lastStyle || {};
+    const options = styles.filter((x) => x !== p.lastStyle[kind]);
+    const pick = options[Math.floor(Math.random() * options.length)];
+    p.lastStyle[kind] = pick;
+    return pick;
+  }
+  function click(p) {
+    p.el.animate([{ scale: 1 }, { scale: 0.82 }, { scale: 1 }], { duration: 220, easing: "ease-out" });
+  }
+  function ghostFor(p, el) {
+    const img = el.querySelector("img");
+    const g = document.createElement("div");
+    g.className = "ghost";
+    const src = img ? img.currentSrc || img.src : "";
+    if (src) g.style.backgroundImage = `url("${src}")`;
+    else g.style.backgroundImage = getComputedStyle(el).backgroundImage;
+    mp.appendChild(g);
+    p.ghost = g;
+    return g;
+  }
+  function dropGhost(p) {
+    const g = p.ghost;
+    if (!g) return;
+    p.ghost = null;
+    g.classList.add("gone");
+    setTimeout(() => g.remove(), 350);
+  }
+  function waitImg(el) {
+    const img = el.querySelector("img");
+    if (!img || img.complete) return Promise.resolve();
+    return Promise.race([new Promise((r) => img.addEventListener("load", r, { once: true })), sleep(2500)]);
+  }
+
   async function build(p, el) {
     const type = el.dataset.b;
-    p.speed = BASE_SPEED * (queue.length > 8 ? 1.8 : queue.length > 4 ? 1.3 : 1);
+    p.speed = BASE_SPEED * (queue.length > 8 ? 1.8 : queue.length > 4 ? 1.3 : 1) * rand(0.88, 1.15);
     const k = 1 / p.speed;
     status(p, `${VERB[type] || "Editing"} ${layerName(el)}`);
     el.classList.add("is-building");
     layerState(el, "building", p);
     inspect(p, el);
 
-    await moveTo(p, () => pt(el, "tl"));
-    select(p, el);
+    // now and then, overshoot a little before settling on the target
+    if (Math.random() < 0.18 && queue.length < 5) {
+      const q = pt(el, "c");
+      const ox = rand(-90, 90), oy = rand(-50, 50);
+      await moveTo(p, () => clampPt(q.x + ox, q.y + oy), rand(300, 450));
+    }
 
     if (type === "type") {
-      p.sel.progress = 1;
+      const style = pickStyle(p, "type", ["click", "box"]);
+      if (style === "box") {
+        // drag out a text box first, then type into it
+        await moveTo(p, () => pt(el, "tl"));
+        select(p, el, "tl");
+        const drag = animateProgress(p, 300 * k);
+        await moveTo(p, () => pt(el, "br"), 300);
+        await drag;
+        await moveTo(p, () => pt(el, "tl"), 260);
+      } else {
+        await moveTo(p, () => pt(el, "tl"));
+        click(p);
+        select(p, el, "tl");
+        p.sel.progress = 1;
+      }
       const units = el.__units || [];
       const per = Math.max(clamp(1500 / Math.max(units.length, 1), el.dataset.mode === "char" ? 35 : 10, 70) - 30, 6) * k;
+      const pauses = units.length > 12 ? Math.floor(rand(0, 2.4)) : 0;
+      const pauseAt = new Set(Array.from({ length: pauses }, () => Math.floor(rand(4, units.length - 4))));
+      const drift = Math.floor(rand(4, 9));
       p.caret.el.classList.add("show");
       for (let i = 0; i < units.length; i++) {
         if (!inView(el)) { units.forEach((u) => u.classList.add("on")); break; }
         units[i].classList.add("on");
         p.caret.unit = units[i];
-        // the cursor drifts along with the text, a little behind the caret
-        if (i % 6 === 0 && !p.tween) {
+        if (i % drift === 0 && !p.tween) {
           const u = units[i];
-          moveTo(p, () => { const r = u.getBoundingClientRect(); return clampPt(r.right + 14, r.bottom + 6); }, 350);
+          const ox = rand(10, 22), oy = rand(4, 14);
+          moveTo(p, () => { const r = u.getBoundingClientRect(); return clampPt(r.right + ox, r.bottom + oy); }, rand(300, 420));
         }
-        await sleep(per);
+        await sleep(pauseAt.has(i) ? per + rand(180, 420) * k : per * rand(0.7, 1.3));
       }
       p.caret.el.classList.remove("show");
       p.caret.unit = null;
     } else if (type === "img") {
-      // drag out the frame with the placeholder, then drop the image in
-      const drag = animateProgress(p, 390 * k);
-      await moveTo(p, () => pt(el, "br"), 390);
-      await drag;
-      const img = el.querySelector("img");
-      if (img && !img.complete) await Promise.race([new Promise((r) => img.addEventListener("load", r, { once: true })), sleep(2500)]);
-      await moveTo(p, () => pt(el, "c"), 330);
-      await sleep(90 * k);
+      const style = pickStyle(p, "img", ["drag", "dragIn", "center"]);
+      if (style === "dragIn") {
+        // grab the file from the nearest screen edge and carry it in
+        const r = el.getBoundingClientRect();
+        const fromLeft = r.left + r.width / 2 < innerWidth / 2;
+        const ey = clamp(r.top + r.height * rand(0.2, 0.8), TOP() + 40, innerHeight - 120);
+        await moveTo(p, () => clampPt(fromLeft ? LEFT() : RIGHT(), ey), rand(380, 520));
+        click(p);
+        ghostFor(p, el);
+        select(p, el, "c");
+        p.sel.progress = 1;
+        await waitImg(el);
+        await moveTo(p, () => pt(el, "c"), rand(520, 700));
+        click(p);
+        dropGhost(p);
+      } else if (style === "center") {
+        await moveTo(p, () => pt(el, "c"));
+        click(p);
+        select(p, el, "c");
+        await animateProgress(p, 380 * k);
+        await waitImg(el);
+        await sleep(90 * k);
+      } else {
+        const fromBr = Math.random() < 0.5;
+        await moveTo(p, () => pt(el, fromBr ? "br" : "tl"));
+        select(p, el, fromBr ? "br" : "tl");
+        const drag = animateProgress(p, 390 * k);
+        await moveTo(p, () => pt(el, fromBr ? "tl" : "br"), 390);
+        await drag;
+        await waitImg(el);
+        await moveTo(p, () => pt(el, "c"), 330);
+        await sleep(90 * k);
+      }
       el.classList.add("dropped");
     } else {
-      const drag = animateProgress(p, 350 * k);
-      await moveTo(p, () => pt(el, "br"), 350);
-      await drag;
+      const style = pickStyle(p, "box", ["tl", "br", "c"]);
+      if (style === "c") {
+        await moveTo(p, () => pt(el, "c"));
+        click(p);
+        select(p, el, "c");
+        await animateProgress(p, 300 * k);
+      } else {
+        await moveTo(p, () => pt(el, style));
+        select(p, el, style);
+        const drag = animateProgress(p, 350 * k);
+        await moveTo(p, () => pt(el, style === "tl" ? "br" : "tl"), 350);
+        await drag;
+      }
       await sleep(50 * k);
       el.classList.add("popped");
     }
@@ -424,7 +520,7 @@
     el.classList.remove("is-building");
     el.classList.add("is-built");
     layerState(el, "built");
-    await sleep(230 * k);
+    await sleep(rand(160, 300) * k);
     deselect(p);
     el.__busy = false;
   }
@@ -437,8 +533,7 @@
     ["Love how the grid lines up.", "12 columns, 20px gutters ✓"],
     ["Ship it?", "Ship it 🚀"],
   ]).slice();
-  let chatIdx = Math.floor(Math.random() * CHATS.length);
-  let nextChatAt = performance.now() + rand(9000, 14000) / BASE_SPEED;
+  let nextChatAt = performance.now() + rand(10000, 16000) / BASE_SPEED;
   let pendingReply = null;
 
   function visibleBuilt() {
@@ -451,6 +546,154 @@
     p.chatT = setTimeout(() => p.chat.classList.remove("show"), ms);
   }
 
+  // elements both cursors looked at recently, so they spread their attention around
+  const recentEls = [];
+  function pickEl(p, filter) {
+    const other = p === PRANAV ? CLAUDE : PRANAV;
+    let pool = visibleBuilt().filter((el) => el !== other.focus && (!filter || filter(el)));
+    const fresh = pool.filter((el) => !recentEls.includes(el));
+    if (fresh.length) pool = fresh;
+    if (!pool.length) return null;
+    const el = pool[Math.floor(Math.random() * pool.length)];
+    recentEls.push(el);
+    if (recentEls.length > 8) recentEls.shift();
+    p.focus = el;
+    return el;
+  }
+
+  const measureEl = document.createElement("div");
+  measureEl.className = "measure";
+  measureEl.innerHTML = "<span></span>";
+  mp.appendChild(measureEl);
+
+  // wait, but wake early when there is new work
+  async function calm(ms) {
+    const until = performance.now() + ms;
+    while (performance.now() < until && !queue.length && !anyRequest()) await sleep(90);
+  }
+
+  const IDLE = {
+    async glance(p) {
+      const el = pickEl(p);
+      if (!el) return false;
+      const ox = rand(-60, 60), oy = rand(-20, 20);
+      await moveTo(p, () => { const q = pt(el, "c"); return clampPt(q.x + ox, q.y + oy); }, rand(1100, 1800));
+      await calm(rand(1400, 2600));
+    },
+    async select(p) {
+      const el = pickEl(p);
+      if (!el) return false;
+      const where = Math.random() < 0.5 ? "tl" : "c";
+      await moveTo(p, () => pt(el, where), rand(900, 1400));
+      click(p);
+      select(p, el, "tl");
+      p.sel.progress = 1;
+      await calm(rand(900, 1500));
+      deselect(p);
+      await calm(rand(800, 1600));
+    },
+    async read(p) {
+      // slowly trace across a paragraph, as if proof-reading it
+      const el = pickEl(p, (e) => e.dataset.b === "type" && e.getBoundingClientRect().height > 40);
+      if (!el) return false;
+      const lines = Math.min(3, Math.max(1, Math.round(el.getBoundingClientRect().height / 30)));
+      for (let i = 0; i < lines; i++) {
+        const f = (i + 0.6) / (lines + 0.2);
+        const end = rand(10, 60);
+        await moveTo(p, () => { const r = el.getBoundingClientRect(); return clampPt(r.left + 8, r.top + r.height * f + 10); }, i ? 420 : rand(900, 1300));
+        await moveTo(p, () => { const r = el.getBoundingClientRect(); return clampPt(r.right - end, r.top + r.height * f + 10); }, rand(1300, 1900));
+        if (queue.length) return;
+      }
+      await calm(rand(900, 1600));
+    },
+    async measure(p) {
+      // check the gap between two stacked elements
+      const vis = visibleBuilt().filter((e) => e.dataset.b !== "rule");
+      const pairs = [];
+      for (let i = 0; i < vis.length - 1; i++) {
+        const a = vis[i].getBoundingClientRect(), b = vis[i + 1].getBoundingClientRect();
+        const gap = b.top - a.bottom;
+        if (gap >= 8 && gap < 220 && Math.abs((a.left + a.width / 2) - (b.left + b.width / 2)) < 400) pairs.push([vis[i], vis[i + 1]]);
+      }
+      if (!pairs.length) return false;
+      const [A, B] = pairs[Math.floor(Math.random() * pairs.length)];
+      const ax = rand(0.25, 0.6);
+      const place = () => {
+        const a = A.getBoundingClientRect(), b = B.getBoundingClientRect();
+        const x = Math.max(a.left, b.left) + Math.min(a.width, b.width) * ax;
+        return { x, y1: a.bottom, y2: b.top };
+      };
+      await moveTo(p, () => { const m = place(); return clampPt(m.x + 6, (m.y1 + m.y2) / 2); }, rand(900, 1300));
+      measureEl.style.setProperty("--c", p.color);
+      const m = place();
+      measureEl.style.transform = `translate3d(${Math.round(m.x)}px, ${Math.round(m.y1)}px, 0)`;
+      measureEl.style.height = m.y2 - m.y1 + "px";
+      measureEl.querySelector("span").textContent = Math.round(m.y2 - m.y1);
+      measureEl.classList.add("show");
+      await calm(rand(1300, 2000));
+      measureEl.classList.remove("show");
+      await calm(rand(600, 1200));
+    },
+    async nudge(p) {
+      // pick something up, try it a few pixels over, put it back
+      const el = pickEl(p, (e) => e.getBoundingClientRect().height < 160);
+      if (!el) return false;
+      await moveTo(p, () => pt(el, "c"), rand(900, 1300));
+      click(p);
+      select(p, el, "tl");
+      p.sel.progress = 1;
+      const dx = rand(6, 12) * (Math.random() < 0.5 ? -1 : 1);
+      const start = { x: p.x, y: p.y };
+      el.animate([{ translate: "0 0" }, { translate: `${dx}px 0`, offset: 0.35 }, { translate: `${dx}px 0`, offset: 0.65 }, { translate: "0 0" }],
+        { duration: 1500, easing: "ease-in-out" });
+      await moveTo(p, () => ({ x: start.x + dx, y: start.y }), 520);
+      await sleep(460);
+      await moveTo(p, () => start, 520);
+      deselect(p);
+      await calm(rand(800, 1400));
+    },
+    async rest() {
+      await calm(rand(2200, 4200));
+    },
+    async visit(p) {
+      // drift over towards the other person, like pointing something out
+      const o = p === PRANAV ? CLAUDE : PRANAV;
+      const ox = rand(40, 80) * (Math.random() < 0.5 ? -1 : 1), oy = rand(30, 60);
+      const tx = o.x + ox, ty = o.y + oy;
+      await moveTo(p, () => clampPt(tx, ty), rand(1200, 1700));
+      await calm(rand(1200, 2200));
+    },
+    async away(p) {
+      // step away from the screen for a moment, then come back
+      const right = Math.random() < 0.5;
+      const y = rand(TOP() + 80, innerHeight - 160);
+      await moveTo(p, () => ({ x: right ? innerWidth + 60 : -60, y }), rand(900, 1300));
+      await calm(rand(4000, 8000));
+    },
+    async wander(p) {
+      const x = rand(LEFT() + 60, RIGHT() - 60), y = rand(TOP() + 60, innerHeight - 140);
+      await moveTo(p, () => clampPt(x, y), rand(1400, 2200));
+      await calm(rand(1600, 3000));
+    },
+  };
+  const WEIGHTS = { glance: 3, select: 2, read: 2, measure: 2, nudge: 1.5, rest: 2, visit: 1, away: 0.6, wander: 1.5 };
+
+  function pickIdle(p) {
+    const other = p === PRANAV ? CLAUDE : PRANAV;
+    p.history = p.history || [];
+    const names = Object.keys(IDLE).filter((n) => !p.history.slice(-3).includes(n) && n !== other.doing);
+    let r = Math.random() * names.reduce((t, n) => t + WEIGHTS[n], 0);
+    for (const n of names) { r -= WEIGHTS[n]; if (r <= 0) return n; }
+    return names[0] || "rest";
+  }
+
+  // each comment pair is used once before any repeats, in a shuffled order
+  let chatDeck = [];
+  function nextChat() {
+    if (!chatDeck.length) chatDeck = CHATS.slice().sort(() => Math.random() - 0.5);
+    return chatDeck.pop();
+  }
+
   async function idle(p) {
     p.speed = 1;
     // Claude answers a pending comment first
@@ -458,54 +701,53 @@
       const { el, text } = pendingReply;
       pendingReply = null;
       if (inView(el)) {
-        status(p, "Replying to Pranav");
-        await moveTo(p, () => { const q = pt(el, "c"); return clampPt(q.x + 70, q.y + 30); });
-        select(p, el); p.sel.progress = 1;
+        p.doing = "reply";
+        const ox = rand(50, 90), oy = rand(20, 50);
+        await moveTo(p, () => { const q = pt(el, "c"); return clampPt(q.x + ox, q.y + oy); });
+        if (Math.random() < 0.5) { select(p, el, "tl"); p.sel.progress = 1; }
         say(p, text);
-        await sleep(1600);
+        await calm(1700);
         deselect(p);
+        p.doing = null;
         return;
       }
     }
     // Pranav starts a conversation now and then
     if (p === PRANAV && !pendingReply && performance.now() > nextChatAt) {
-      const pool = visibleBuilt();
-      if (pool.length) {
-        const el = pool[Math.floor(Math.random() * pool.length)];
-        const [ask, reply] = CHATS[chatIdx++ % CHATS.length];
-        status(p, "Leaving a comment");
+      const el = pickEl(p);
+      if (el) {
+        p.doing = "chat";
+        const [ask, reply] = nextChat();
         await moveTo(p, () => pt(el, "c"));
         say(p, ask);
-        pendingReply = { el, text: reply, at: performance.now() + 1100 };
-        nextChatAt = performance.now() + rand(14000, 22000);
-        await sleep(1800);
+        pendingReply = { el, text: reply, at: performance.now() + rand(900, 1500) };
+        nextChatAt = performance.now() + rand(20000, 34000);
+        await calm(1900);
+        p.doing = null;
         return;
       }
     }
-    // otherwise: look over something on screen, sometimes select it
-    const pool = visibleBuilt();
-    status(p, p === PRANAV ? "Reviewing layout" : "Checking alignment");
-    if (pool.length && Math.random() < 0.55) {
-      const el = pool[Math.floor(Math.random() * pool.length)];
-      const ox = rand(-60, 60), oy = rand(-20, 20);
-      await moveTo(p, () => { const q = pt(el, "c"); return clampPt(q.x + ox, q.y + oy); }, rand(1200, 1900));
-      if (Math.random() < 0.4 && !queue.length) {
-        select(p, el); p.sel.progress = 1;
-        await sleep(900);
-        deselect(p);
-      }
-    } else {
-      const x = rand(LEFT() + 60, RIGHT() - 60), y = rand(TOP() + 60, innerHeight - 140);
-      await moveTo(p, () => clampPt(x, y), rand(1400, 2200));
-    }
-    // wait a bit, but wake early if there is work
-    const until = performance.now() + rand(1800, 3600);
-    while (performance.now() < until && !queue.length) await sleep(90);
+    const name = pickIdle(p);
+    p.doing = name;
+    p.history.push(name);
+    if (p.history.length > 6) p.history.shift();
+    const ok = await IDLE[name](p);
+    if (ok === false) await IDLE.wander(p);
+    p.doing = null;
+    p.focus = null;
   }
 
   async function worker(p, delay) {
     await sleep(delay);
     for (;;) {
+      if (p.request) {
+        const job = p.request;
+        p.request = null;
+        p.doing = "visitor";
+        try { await job(p); } catch (e) {}
+        p.doing = null;
+        continue;
+      }
       if (skipped) { await idle(p); continue; }
       const el = take();
       if (el) {
@@ -530,6 +772,216 @@
       PEOPLE.forEach((p) => { p.caret.el.classList.remove("show"); p.caret.unit = null; deselect(p); });
       skipBtn.textContent = "Showing final";
       skipBtn.disabled = true;
+    });
+  }
+
+  /* ---------------- The visitor: their own cursor joins in ---------------- */
+  const YOU_COLOR = "#2fbf71";
+  const you = { x: -100, y: -100, seen: false, lastMove: 0, still: 0 };
+  function anyRequest() { return PEOPLE.some((p) => p.request); }
+  function helper(prefer) {
+    // whoever is free; never pull someone off a build
+    const free = PEOPLE.filter((p) => !p.request && p.doing !== "visitor" && p.doing !== "chat" && p.doing !== "reply");
+    if (prefer && free.includes(prefer)) return prefer;
+    return free.sort((a, b) => (a.doing ? 1 : 0) - (b.doing ? 1 : 0))[0] || null;
+  }
+  function nearYou(ox, oy) { return () => clampPt(you.x + ox, you.y + oy); }
+  const once = (arr) => { const a = arr.slice().sort(() => Math.random() - 0.5); return () => (a.length ? a.pop() : null); };
+
+  const finePointer = matchMedia("(hover: hover) and (pointer: fine)").matches;
+  if (finePointer) {
+    // name tag that rides along with the visitor's own pointer
+    const tag = document.createElement("div");
+    tag.className = "you-tag";
+    tag.textContent = "You";
+    tag.style.setProperty("--c", YOU_COLOR);
+    mp.appendChild(tag);
+
+    // hover outline in the visitor's colour
+    const hov = document.createElement("div");
+    hov.className = "you-hover";
+    hov.style.setProperty("--c", YOU_COLOR);
+    hov.innerHTML = "<span></span>";
+    mp.appendChild(hov);
+    let hovEl = null;
+
+    // click ripple
+    function ripple(x, y) {
+      const r = document.createElement("div");
+      r.className = "you-ripple";
+      r.style.setProperty("--c", YOU_COLOR);
+      r.style.left = x + "px"; r.style.top = y + "px";
+      mp.appendChild(r);
+      setTimeout(() => r.remove(), 600);
+    }
+
+    const placeYou = () => {
+      tag.style.transform = `translate3d(${Math.round(you.x + 14)}px, ${Math.round(you.y + 20)}px, 0)`;
+      if (hovEl && isBuilt(hovEl)) {
+        const r = hovEl.getBoundingClientRect();
+        hov.style.transform = `translate3d(${r.left - 2}px, ${r.top - 2}px, 0)`;
+        hov.style.width = r.width + 4 + "px";
+        hov.style.height = r.height + 4 + "px";
+      }
+      if (chatBox.classList.contains("show")) chatBox.style.transform = `translate3d(${Math.round(you.x + 14)}px, ${Math.round(you.y + 44)}px, 0)`;
+    };
+    addEventListener("scroll", placeYou, { passive: true });
+
+    addEventListener("pointermove", (e) => {
+      if (e.pointerType !== "mouse") return;
+      you.x = e.clientX; you.y = e.clientY; you.lastMove = performance.now();
+      if (!you.seen) { you.seen = true; tag.classList.add("show"); greetSoon(); }
+      const target = document.elementFromPoint(e.clientX, e.clientY);
+      const el = target && target.closest && target.closest("[data-b].is-built");
+      hovEl = el && el.getBoundingClientRect().height < innerHeight * 0.9 ? el : null;
+      hov.classList.toggle("show", !!hovEl);
+      if (hovEl) hov.querySelector("span").textContent = layerName(hovEl);
+      placeYou();
+      watchLinger(target);
+      maybeDodge();
+    }, { passive: true });
+    document.addEventListener("mouseleave", () => { tag.classList.remove("show"); hov.classList.remove("show"); });
+    document.addEventListener("mouseenter", () => { if (you.seen) tag.classList.add("show"); });
+    addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse") ripple(e.clientX, e.clientY); }, { passive: true });
+
+    /* --- 1. a hello when you arrive (once per visit) --- */
+    let greeted = false;
+    try { greeted = !!sessionStorage.getItem("lb-greeted"); } catch (e) {}
+    function greetSoon() {
+      if (greeted) return;
+      greeted = true;
+      try { sessionStorage.setItem("lb-greeted", "1"); } catch (e) {}
+      setTimeout(() => {
+        const h = helper(CLAUDE);
+        if (!h) return;
+        h.request = async (p) => {
+          await moveTo(p, nearYou(70, 34), 1000);
+          say(p, "Hi 👋 you’re in the file with us!", 3000);
+          await sleep(1400);
+          const o = p === PRANAV ? CLAUDE : PRANAV;
+          if (!o.request) o.request = async (q) => {
+            await moveTo(q, nearYou(-150, 50), 1100);
+            say(q, "Press / to chat with us", 3400);
+            hint.classList.add("show");
+            setTimeout(() => hint.classList.remove("show"), 7000);
+            await sleep(1600);
+          };
+          await sleep(900);
+        };
+      }, 2200);
+    }
+
+    /* --- 2. a comment when you linger on a project --- */
+    const lingerLines = once([
+      "Good pick, click to open it ↗",
+      "This one’s a favourite 👀",
+      "There are more slides in Portfolio 2",
+      "Take your time, we’re still building 🛠️",
+      "Pranav loved making this one",
+    ]);
+    let lingerT = null, lingerEl = null, lastLinger = 0;
+    function watchLinger(target) {
+      const card = target && target.closest && target.closest(".card, .case-media, .slide .media");
+      if (card === lingerEl) return;
+      lingerEl = card;
+      clearTimeout(lingerT);
+      if (!card || performance.now() - lastLinger < 14000) return;
+      lingerT = setTimeout(() => {
+        const line = lingerLines();
+        const h = helper();
+        if (!line || !h || lingerEl !== card) return;
+        lastLinger = performance.now();
+        h.request = async (p) => {
+          await moveTo(p, nearYou(rand(50, 90), rand(-70, -40)), 900);
+          say(p, line, 2800);
+          await sleep(1600);
+        };
+      }, 1300);
+    }
+
+    /* --- 3. they dodge when you get too close --- */
+    const dodgeLines = ["Hey! 👋", "Catch me if you can 😄", "Oh, hi there", "Personal space! 😅", "👀"];
+    let lastDodge = 0;
+    function maybeDodge() {
+      if (performance.now() - lastDodge < 5000) return;
+      for (const p of PEOPLE) {
+        if (p.request || p.doing === "visitor" || p.doing === "chat") continue;
+        const building = items.some((el) => el.__busy && p.sel.target === el && el.classList.contains("is-building"));
+        if (building) continue;
+        if (Math.hypot(p.x - you.x, p.y - you.y) < 46) {
+          lastDodge = performance.now();
+          const ang = Math.atan2(p.y - you.y, p.x - you.x) + rand(-0.6, 0.6);
+          const tx = p.x + Math.cos(ang) * 110, ty = p.y + Math.sin(ang) * 80;
+          p.request = async (q) => {
+            await moveTo(q, () => clampPt(tx, ty), 420);
+            say(q, dodgeLines[Math.floor(Math.random() * dodgeLines.length)], 1800);
+            await sleep(900);
+          };
+          break;
+        }
+      }
+    }
+
+    /* --- 4. cursor chat: press / and type --- */
+    const hint = document.createElement("div");
+    hint.className = "you-hint";
+    hint.innerHTML = "Press <kbd>/</kbd> to chat with Pranav &amp; Claude";
+    document.body.appendChild(hint);
+
+    const chatBox = document.createElement("div");
+    chatBox.className = "you-chat";
+    chatBox.style.setProperty("--c", YOU_COLOR);
+    chatBox.innerHTML = '<input type="text" maxlength="80" placeholder="Say something…" aria-label="Chat message">';
+    mp.appendChild(chatBox);
+    const chatIn = chatBox.querySelector("input");
+
+    function openChat() {
+      if (you.x < 0) { you.x = innerWidth / 2; you.y = innerHeight / 2; }
+      chatBox.classList.add("show");
+      chatBox.classList.remove("said");
+      chatIn.readOnly = false;
+      chatIn.value = "";
+      placeYou();
+      chatIn.focus({ preventScroll: true });
+      hint.classList.remove("show");
+    }
+    function closeChat() {
+      chatBox.classList.remove("show", "said");
+      chatIn.blur();
+    }
+    function replyTo(msg) {
+      const m = msg.toLowerCase();
+      if (/\b(hi|hello|hey|hii+|yo|namaste)\b/.test(m)) return "Hey! 👋 Glad you dropped by";
+      if (/(hire|job|intern|work with|collab|freelance|opportunit|role)/.test(m)) return "Love that! Pranav’s email is in Contact ✉️";
+      if (/(nice|love|cool|great|awesome|amazing|beautiful|wow|fire|sick|good)/.test(m)) return "Thank you! 🙌 That means a lot";
+      if (/(who|claude|ai|bot)/.test(m)) return "I’m Claude, I helped Pranav build this 🤝";
+      if (/\?$/.test(m)) return "Good question! Ask Pranav via Contact 😊";
+      return "Noted! Pranav will see this 😊";
+    }
+    chatIn.addEventListener("keydown", (e) => {
+      e.stopPropagation();
+      if (e.key === "Escape") { closeChat(); return; }
+      if (e.key !== "Enter") return;
+      const msg = chatIn.value.trim();
+      if (!msg) { closeChat(); return; }
+      chatIn.readOnly = true;
+      chatBox.classList.add("said");
+      chatIn.blur();
+      setTimeout(closeChat, 4200);
+      const answer = replyTo(msg);
+      const h = helper(Math.random() < 0.5 ? PRANAV : CLAUDE) || helper();
+      if (h) h.request = async (p) => {
+        await moveTo(p, nearYou(rand(60, 100), rand(50, 80)), 800);
+        say(p, answer, 3400);
+        await sleep(1500);
+      };
+    });
+    addEventListener("keydown", (e) => {
+      if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
+      const a = document.activeElement;
+      if (a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.isContentEditable)) return;
+      e.preventDefault();
+      openChat();
     });
   }
 
