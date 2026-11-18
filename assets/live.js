@@ -335,7 +335,7 @@
 
   /* ---------------- Build queue ---------------- */
   const queue = [];
-  const STALE_MS = 3800;
+  const STALE_MS = 4500;
 
   function enqueue(el) {
     if (el.__q || isBuilt(el)) return;
@@ -354,29 +354,38 @@
     if (el.__units) el.__units.forEach((u) => u.classList.add("on"));
     layerState(el, "built");
   }
+  // The cursors always work on what the visitor is looking at, top to bottom.
+  // Anything scrolled past stays unbuilt and waits until it comes back into view.
   function take() {
     const now = performance.now();
-    // fast-forward anything the visitor has been waiting on too long, or scrolled past
+    // something on screen has waited too long: finish it so reading is never blocked
     for (let i = queue.length - 1; i >= 0; i--) {
       const el = queue[i];
-      if (el.__busy) continue;
-      if (now - el.__q > STALE_MS / BASE_SPEED || !inView(el)) {
-        if (ancestorsBuilt(el) || !inView(el)) { queue.splice(i, 1); instant(el); }
-      }
+      if (el.__busy || !el.__seen || !inView(el)) continue;
+      if (now - el.__seen > STALE_MS / BASE_SPEED && ancestorsBuilt(el)) { queue.splice(i, 1); instant(el); }
     }
     for (let i = 0; i < queue.length; i++) {
       const el = queue[i];
-      if (el.__busy || !ancestorsBuilt(el)) continue;
+      if (el.__busy || isBuilt(el) || !inView(el) || !ancestorsBuilt(el)) continue;
       queue.splice(i, 1);
       el.__busy = true;
       return el;
     }
+    // drop anything that got built some other way
+    for (let i = queue.length - 1; i >= 0; i--) if (isBuilt(queue[i])) queue.splice(i, 1);
     return null;
+  }
+  function requeue(el) {
+    el.__busy = false;
+    if (!queue.includes(el)) { queue.push(el); queue.sort((a, b) => a.__i - b.__i); }
   }
 
   const io = new IntersectionObserver(
     (entries) => entries.forEach((en) => {
-      if (en.isIntersecting) { enqueue(en.target); io.unobserve(en.target); }
+      const el = en.target;
+      if (isBuilt(el)) { io.unobserve(el); return; }
+      if (en.isIntersecting) { el.__seen = performance.now(); enqueue(el); }
+      else el.__seen = 0;
     }),
     { rootMargin: "0px 0px -12% 0px", threshold: 0 }
   );
@@ -761,7 +770,7 @@
       if (skipped) { await idle(p); continue; }
       const el = take();
       if (el) {
-        if (!inView(el)) { el.__busy = false; instant(el); continue; }
+        if (!inView(el)) { requeue(el); continue; }
         p.doing = "build";
         try { await build(p, el); } catch (e) { el.__busy = false; instant(el); }
         p.doing = null;
