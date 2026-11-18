@@ -15,8 +15,7 @@
 <body data-page="portfolio2">
 
   <header class="tb">
-    <a class="tb-logo" href="index.html" aria-label="Pranav Kuchekar, home">PK</a>
-    <div class="tb-file"><span>Drafts /</span><strong>pranav-kuchekar.site</strong></div>
+    <a class="tb-logo" href="index.html" aria-label="Pranav Kuchekar, home"><span class="mk">PK</span><span class="wm">Pranav Kuchekar</span></a>
     <nav class="tb-tabs" aria-label="Pages">
       <a class="tb-tab" href="index.html">Landing</a>
       <a class="tb-tab" href="portfolio.html">Portfolio 1</a>
@@ -30,29 +29,16 @@
       <span class="tb-zoom" id="zoomDisplay">100%</span>
       <button type="button" class="zb" id="zoomIn" aria-label="Zoom in">+</button>
     </div>
-    <div class="tb-people">
-      <div class="tb-avatars"><span class="tb-av p" title="Pranav">P</span><span class="tb-av c" title="Claude">C</span></div>
-    </div>
   </header>
-
-  <aside class="panel layers" aria-label="Layers">
-    <h4>Layers <span id="layer-count"></span></h4>
-    <div id="layers"></div>
-  </aside>
-  <aside class="panel inspect" aria-label="Inspector">
-    <h4>Design <span>Inspect</span></h4>
-    <div id="inspect-body"></div>
-  </aside>
 
   <main class="canvas">
     <div class="frame-wrap">
-      <div class="frame-label"><b>Portfolio 2</b><span>Deck · 30 frames · 1920 × 1080</span></div>
       <div class="frame deck">
 
         <div class="deck-intro" data-section="Header">
           <span class="eyebrow" data-b="type" data-name="Eyebrow">Portfolio 2 · Full deck</span>
           <h1 class="h-lg" data-b="type" data-mode="char" data-name="Title">Every slide, in order.</h1>
-          <p class="lead" data-b="type" data-name="Intro" style="max-width: 46ch">Thirty frames, from the Gyro Bike to the other works. Use the slide counter or zoom in the toolbar.</p>
+          <p class="lead" data-b="type" data-name="Intro" style="max-width: 46ch">Thirty frames, from the Gyro Bike to the other works. Use the slide counter or zoom at the top.</p>
         </div>
 
         <div class="deck-list" id="deck"></div>
@@ -65,12 +51,6 @@
     </div>
   </main>
 
-  <div class="hud" role="status">
-    <div class="hud-who"><i style="background:var(--pranav)"></i><b>Pranav</b><span data-hud="pranav">Joining…</span></div>
-    <div class="hud-sep"></div>
-    <div class="hud-who"><i style="background:var(--claude)"></i><b>Claude</b><span data-hud="claude">Joining…</span></div>
-    <button type="button" id="lb-skip">Skip to final</button>
-  </div>
 
   <script>
     (function () {
@@ -153,9 +133,9 @@
     })();
 
     window.LB_CHAT = [
-      ["Can each slide feel like a frame?", "Every slide is labelled like a canvas frame now."],
+      ["Can each slide feel like a frame?", "Every slide has a caption now."],
       ["Will 30 big images load slowly?", "They lazy-load about 1200px ahead ✓"],
-      ["Add a way to jump to a slide?", "Type a number in the toolbar and press Enter."],
+      ["Add a way to jump to a slide?", "Type a number in the header and press Enter."],
       ["The Gyro Bike slides look great.", "Agreed, the cardboard reads really well."]
     ];
   </script>

@@ -207,7 +207,7 @@
       const start = { x: p.x, y: p.y };
       const t0 = target();
       const dist = Math.hypot(t0.x - start.x, t0.y - start.y);
-      if (dur == null) dur = clamp(260 + dist * 0.55, 260, 900);
+      if (dur == null) dur = clamp(230 + dist * 0.55, 230, 870);
       dur /= p.speed || BASE_SPEED;
       if (p.tween) p.tween.resolve();
       p.tween = { start, target, t0: performance.now(), dur, arc: rand(-0.12, 0.12) * dist, resolve };
@@ -229,7 +229,7 @@
         p.y = tw.start.y + dy * e + (dx / len) * off;
         if (t >= 1) { p.tween = null; tw.resolve(); }
       }
-      p.el.style.transform = `translate3d(${p.x - 3}px, ${p.y - 2}px, 0)`;
+      p.el.style.transform = `translate3d(${Math.round(p.x - 3)}px, ${Math.round(p.y - 2)}px, 0)`;
 
       const s = p.sel;
       if (s.target) {
@@ -388,7 +388,7 @@
     if (type === "type") {
       p.sel.progress = 1;
       const units = el.__units || [];
-      const per = clamp(1500 / Math.max(units.length, 1), el.dataset.mode === "char" ? 35 : 10, 70) * k;
+      const per = Math.max(clamp(1500 / Math.max(units.length, 1), el.dataset.mode === "char" ? 35 : 10, 70) - 30, 6) * k;
       p.caret.el.classList.add("show");
       for (let i = 0; i < units.length; i++) {
         if (!inView(el)) { units.forEach((u) => u.classList.add("on")); break; }
@@ -397,7 +397,7 @@
         // the cursor drifts along with the text, a little behind the caret
         if (i % 6 === 0 && !p.tween) {
           const u = units[i];
-          moveTo(p, () => { const r = u.getBoundingClientRect(); return clampPt(r.right + 14, r.bottom + 6); }, 380);
+          moveTo(p, () => { const r = u.getBoundingClientRect(); return clampPt(r.right + 14, r.bottom + 6); }, 350);
         }
         await sleep(per);
       }
@@ -405,26 +405,26 @@
       p.caret.unit = null;
     } else if (type === "img") {
       // drag out the frame with the placeholder, then drop the image in
-      const drag = animateProgress(p, 420 * k);
-      await moveTo(p, () => pt(el, "br"), 420);
+      const drag = animateProgress(p, 390 * k);
+      await moveTo(p, () => pt(el, "br"), 390);
       await drag;
       const img = el.querySelector("img");
       if (img && !img.complete) await Promise.race([new Promise((r) => img.addEventListener("load", r, { once: true })), sleep(2500)]);
-      await moveTo(p, () => pt(el, "c"), 360);
-      await sleep(120 * k);
+      await moveTo(p, () => pt(el, "c"), 330);
+      await sleep(90 * k);
       el.classList.add("dropped");
     } else {
-      const drag = animateProgress(p, 380 * k);
-      await moveTo(p, () => pt(el, "br"), 380);
+      const drag = animateProgress(p, 350 * k);
+      await moveTo(p, () => pt(el, "br"), 350);
       await drag;
-      await sleep(80 * k);
+      await sleep(50 * k);
       el.classList.add("popped");
     }
 
     el.classList.remove("is-building");
     el.classList.add("is-built");
     layerState(el, "built");
-    await sleep(260 * k);
+    await sleep(230 * k);
     deselect(p);
     el.__busy = false;
   }
@@ -487,7 +487,8 @@
     status(p, p === PRANAV ? "Reviewing layout" : "Checking alignment");
     if (pool.length && Math.random() < 0.55) {
       const el = pool[Math.floor(Math.random() * pool.length)];
-      await moveTo(p, () => { const q = pt(el, "c"); return clampPt(q.x + rand(-60, 60), q.y + rand(-20, 20)); }, rand(700, 1200));
+      const ox = rand(-60, 60), oy = rand(-20, 20);
+      await moveTo(p, () => { const q = pt(el, "c"); return clampPt(q.x + ox, q.y + oy); }, rand(1200, 1900));
       if (Math.random() < 0.4 && !queue.length) {
         select(p, el); p.sel.progress = 1;
         await sleep(900);
@@ -495,10 +496,10 @@
       }
     } else {
       const x = rand(LEFT() + 60, RIGHT() - 60), y = rand(TOP() + 60, innerHeight - 140);
-      await moveTo(p, () => clampPt(x, y), rand(800, 1400));
+      await moveTo(p, () => clampPt(x, y), rand(1400, 2200));
     }
     // wait a bit, but wake early if there is work
-    const until = performance.now() + rand(500, 1300);
+    const until = performance.now() + rand(1800, 3600);
     while (performance.now() < until && !queue.length) await sleep(90);
   }
 

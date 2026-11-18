@@ -15,33 +15,18 @@
 <body data-page="landing">
 
   <header class="tb">
-    <a class="tb-logo" href="index.html" aria-label="Pranav Kuchekar, home">PK</a>
-    <div class="tb-file"><span>Drafts /</span><strong>pranav-kuchekar.site</strong></div>
+    <a class="tb-logo" href="index.html" aria-label="Pranav Kuchekar, home"><span class="mk">PK</span><span class="wm">Pranav Kuchekar</span></a>
     <nav class="tb-tabs" aria-label="Pages">
       <a class="tb-tab" href="index.html" aria-current="page">Landing</a>
       <a class="tb-tab" href="portfolio.html">Portfolio 1</a>
       <a class="tb-tab" href="portfolio2.html">Portfolio 2</a>
     </nav>
     <div class="tb-spacer"></div>
-    <div class="tb-people">
-      <span class="tb-live">2 editing</span>
-      <div class="tb-avatars"><span class="tb-av p" title="Pranav">P</span><span class="tb-av c" title="Claude">C</span></div>
-    </div>
     <a class="tb-btn" href="#contact">Contact</a>
   </header>
 
-  <aside class="panel layers" aria-label="Layers">
-    <h4>Layers <span id="layer-count"></span></h4>
-    <div id="layers"></div>
-  </aside>
-  <aside class="panel inspect" aria-label="Inspector">
-    <h4>Design <span>Inspect</span></h4>
-    <div id="inspect-body"></div>
-  </aside>
-
   <main class="canvas">
     <div class="frame-wrap">
-      <div class="frame-label"><b>Landing</b><span>Desktop · 1240</span></div>
       <div class="frame">
 
         <!-- HERO -->
@@ -170,19 +155,13 @@
     </div>
   </main>
 
-  <div class="hud" role="status">
-    <div class="hud-who"><i style="background:var(--pranav)"></i><b>Pranav</b><span data-hud="pranav">Joining…</span></div>
-    <div class="hud-sep"></div>
-    <div class="hud-who"><i style="background:var(--claude)"></i><b>Claude</b><span data-hud="claude">Joining…</span></div>
-    <button type="button" id="lb-skip">Skip to final</button>
-  </div>
 
   <script>
     window.LB_CHAT = [
       ["Can we make my name bigger?", "Bumped the title up and tightened the tracking."],
       ["Should IGH be the hero card?", "Done, it spans two columns now."],
       ["Keep it monochrome?", "Yes, plus the one red rule from your deck."],
-      ["Is the contact easy to find?", "It’s in the toolbar and at the end ✓"],
+      ["Is the contact easy to find?", "It’s in the header and at the end ✓"],
       ["Looks clean. Ship it?", "Ship it 🚀"]
     ];
   </script>
