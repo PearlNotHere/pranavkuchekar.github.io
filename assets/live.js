@@ -30,7 +30,7 @@
   const FAST = PAGE_SPEED > 1;
   // long pages: cursors only type the text, everything else is already in place
   const TEXT_ONLY = document.body.dataset.build === "text";
-  const BASE_SPEED = Math.min((revisit ? 1.25 : 1) * PAGE_SPEED * 1.15, 3.4);
+  const BASE_SPEED = Math.min((revisit ? 1.25 : 1) * PAGE_SPEED, 3.4);
 
   const items = [...document.querySelectorAll("[data-b]")];
   items.forEach((el, i) => (el.__i = i));
