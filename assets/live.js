@@ -25,7 +25,10 @@
 
   let revisit = false;
   try { revisit = !!sessionStorage.getItem("lb-seen"); sessionStorage.setItem("lb-seen", "1"); } catch (e) {}
-  const BASE_SPEED = revisit ? 1.7 : 1;
+  // pages can ask for a faster build (the portfolio pages are long and image-heavy)
+  const PAGE_SPEED = parseFloat(document.body.dataset.speed) || 1;
+  const FAST = PAGE_SPEED > 1;
+  const BASE_SPEED = Math.min((revisit ? 1.7 : 1) * PAGE_SPEED, 3.4);
 
   const items = [...document.querySelectorAll("[data-b]")];
   items.forEach((el, i) => (el.__i = i));
@@ -413,7 +416,7 @@
   function waitImg(el) {
     const img = el.querySelector("img");
     if (!img || img.complete) return Promise.resolve();
-    return Promise.race([new Promise((r) => img.addEventListener("load", r, { once: true })), sleep(2500)]);
+    return Promise.race([new Promise((r) => img.addEventListener("load", r, { once: true })), sleep(FAST ? 700 : 2500)]);
   }
 
   async function build(p, el) {
@@ -468,7 +471,7 @@
       p.caret.el.classList.remove("show");
       p.caret.unit = null;
     } else if (type === "img") {
-      const style = pickStyle(p, "img", ["drag", "dragIn", "center"]);
+      const style = pickStyle(p, "img", FAST ? ["drag", "center"] : ["drag", "dragIn", "center"]);
       if (style === "dragIn") {
         // grab the file from the nearest screen edge and carry it in
         const r = el.getBoundingClientRect();

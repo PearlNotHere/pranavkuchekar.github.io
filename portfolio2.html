@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/canvas.css?v=12">
+  <link rel="stylesheet" href="assets/canvas.css?v=14">
 </head>
 <body data-page="portfolio2">
 
@@ -54,7 +54,7 @@
 
   <script>
     (function () {
-      var TOTAL = 30, EAGER = 3;
+      var TOTAL = 30, EAGER = 5;
       var chapter = function (n) {
         if (n === 1) return "Cover";
         if (n === 2) return "About";
@@ -91,7 +91,7 @@
       var slides = deck.querySelectorAll(".slide");
       var lazy = new IntersectionObserver(function (es) {
         es.forEach(function (e) { if (e.isIntersecting) { load(e.target); lazy.unobserve(e.target); } });
-      }, { rootMargin: "1200px 0px" });
+      }, { rootMargin: "4000px 0px" });
       slides.forEach(function (s) { lazy.observe(s); });
 
       // slide counter
@@ -134,11 +134,11 @@
 
     window.LB_CHAT = [
       ["Can each slide feel like a frame?", "Every slide has a caption now."],
-      ["Will 30 big images load slowly?", "They lazy-load about 1200px ahead ✓"],
+      ["Will 30 big images load slowly?", "They load well before you scroll to them ✓"],
       ["Add a way to jump to a slide?", "Type a number in the header and press Enter."],
       ["The Gyro Bike slides look great.", "Agreed, the cardboard reads really well."]
     ];
   </script>
-  <script src="assets/live.js?v=12" defer></script>
+  <script src="assets/live.js?v=14" defer></script>
 </body>
 </html>
