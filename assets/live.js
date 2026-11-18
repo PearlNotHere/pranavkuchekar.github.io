@@ -400,6 +400,21 @@
     p.lastStyle[kind] = pick;
     return pick;
   }
+  const PASTE_KEYS = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? "⌘V" : "Ctrl+V";
+  function showPasteTag(p) {
+    let t = p.el.querySelector(".cur-paste");
+    if (!t) {
+      t = document.createElement("div");
+      t.className = "cur-paste";
+      t.textContent = PASTE_KEYS;
+      p.el.appendChild(t);
+    }
+    t.classList.remove("show");
+    void t.offsetWidth;
+    t.classList.add("show");
+    clearTimeout(p.pasteT);
+    p.pasteT = setTimeout(() => t.classList.remove("show"), 900);
+  }
   function click(p) {
     // pulse only the arrow: scaling the whole cursor would also scale its screen position
     const arrow = p.el.querySelector("svg");
@@ -449,7 +464,10 @@
     }
 
     if (type === "type") {
-      const style = TEXT_ONLY ? "click" : pickStyle(p, "type", ["click", "box"]);
+      // long text (more than 8 words) is pasted in, not typed
+      const words = el.textContent.trim().split(/\s+/).filter(Boolean).length;
+      const paste = words > 8;
+      const style = TEXT_ONLY || paste ? "click" : pickStyle(p, "type", ["click", "box"]);
       if (style === "box") {
         // drag out a text box first, then type into it
         await moveTo(p, () => pt(el, "tl"));
@@ -465,12 +483,20 @@
         p.sel.progress = 1;
       }
       const units = el.__units || [];
+      if (paste) {
+        await sleep(rand(120, 220) * k);
+        showPasteTag(p);
+        el.classList.add("pasted");
+        units.forEach((u) => u.classList.add("on"));
+        await sleep(rand(380, 520) * k);
+        p.caret.unit = null;
+      }
       const per = Math.max(clamp(1500 / Math.max(units.length, 1), el.dataset.mode === "char" ? 35 : 10, 70) - 30, 6) * k;
       const pauses = units.length > 12 ? Math.floor(rand(0, 2.4)) : 0;
       const pauseAt = new Set(Array.from({ length: pauses }, () => Math.floor(rand(4, units.length - 4))));
       const drift = Math.floor(rand(4, 9));
-      p.caret.el.classList.add("show");
-      for (let i = 0; i < units.length; i++) {
+      if (!paste) p.caret.el.classList.add("show");
+      for (let i = 0; i < (paste ? 0 : units.length); i++) {
         if (!inView(el)) { units.forEach((u) => u.classList.add("on")); break; }
         units[i].classList.add("on");
         p.caret.unit = units[i];

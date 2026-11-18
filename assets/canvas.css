@@ -606,3 +606,14 @@ html.you-dragging, html.you-dragging * { cursor: grabbing !important; user-selec
 .you-held { position: relative; z-index: 5; filter: drop-shadow(0 14px 26px rgba(0,0,0,.55)); }
 
 .cur svg { transform-origin: 3px 2px; }
+
+/* Long text is pasted in */
+html.lb [data-b="type"].pasted .u.on { animation: lb-paste .42s var(--ease-out) both; }
+@keyframes lb-paste { from { opacity: 0; filter: blur(3px); } to { opacity: 1; filter: none; } }
+.cur-paste {
+  position: absolute; left: -46px; top: 16px; white-space: nowrap;
+  font: 600 10px/1 var(--f-ui); color: #fff; padding: 4px 6px; border-radius: 4px;
+  background: rgba(20,20,20,.9); border: 1px solid var(--c);
+  opacity: 0; transform: translateY(-3px); transition: opacity .2s, transform .3s var(--ease-out);
+}
+.cur-paste.show { opacity: 1; transform: none; }
