@@ -460,9 +460,13 @@ html.lb [data-b="rule"].is-built.popped { animation: lb-rule .6s var(--ease-out)
   .cur-chat { max-width: 180px; font-size: 12px; }
 }
 
+/* Reduced motion: keep the live build, drop the zooms, flashes, blurs and ripples */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
-  .mp, .hud { display: none; }
+  html.lb [data-b].is-built.dropped,
+  html.lb [data-b].is-built.popped,
+  html.lb [data-b="type"].pasted .u.on { animation: lb-in .25s ease-out both !important; }
+  .you-ripple, .ghost { display: none !important; }
+  .card .media img, .btn, .card { transition-duration: .15s !important; }
 }
 
 @media (max-width: 460px) {

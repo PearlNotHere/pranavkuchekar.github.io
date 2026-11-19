@@ -20,8 +20,9 @@
 
   const root = document.documentElement;
   const qs = new URLSearchParams(location.search);
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const FINAL = qs.has("final") || reduce || !root.classList.contains("lb");
+  // Reduced-motion visitors still get the live build; only the flashier effects are toned down (see CSS).
+  // The plain, fully built page is reserved for ?final and for when this script arrived too late.
+  const FINAL = qs.has("final") || !root.classList.contains("lb");
 
   let revisit = false;
   try { revisit = !!sessionStorage.getItem("lb-seen"); sessionStorage.setItem("lb-seen", "1"); } catch (e) {}
