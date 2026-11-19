@@ -663,3 +663,17 @@ html.lb [data-b="type"].pasted .u.on { animation: lb-paste .42s var(--ease-out) 
   .phero-grid { grid-template-columns: 1fr; }
   .pslide { border-radius: 6px; }
 }
+
+/* Logo: PK monogram | PRAN wordmark */
+.tb-logo { gap: 14px; color: #ecebe6; }
+.tb-logo .mk { width: auto; height: 26px; background: none; border-radius: 0; display: block; }
+.tb-logo .wm { width: auto; height: 14px; display: block; }
+.tb-logo-rule { width: 1px; height: 26px; background: rgba(255,255,255,.22); }
+.tb-logo:hover { color: #fff; }
+@media (max-width: 900px) { .tb-logo .wm, .tb-logo-rule { display: none; } }
+@media (max-width: 460px) { .tb-logo .mk { height: 22px; } }
+
+/* Small phones: the logo already links home, so the Landing tab steps aside for the longer names */
+@media (max-width: 460px) {
+  .tb-tabs .tb-tab[href$="index.html"] { display: none; }
+}
