@@ -943,7 +943,7 @@
     const lingerLines = once([
       { who: CLAUDE, text: "Good pick, click to open it ↗" },
       { who: PRANAV, text: "This one’s a favourite of mine 👀" },
-      { who: CLAUDE, text: "There are more slides in Portfolio 2" },
+      { who: CLAUDE, text: "Every project has its own page ↗" },
       { who: PRANAV, text: "I loved making this one 😊" },
       { who: CLAUDE, text: "Take your time, we’re still building 🛠️" },
       { who: PRANAV, text: "Ask me about this one via Contact ✉️" },

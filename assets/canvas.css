@@ -621,3 +621,45 @@ html.lb [data-b="type"].pasted .u.on { animation: lb-paste .42s var(--ease-out) 
   opacity: 0; transform: translateY(-3px); transition: opacity .2s, transform .3s var(--ease-out);
 }
 .cur-paste.show { opacity: 1; transform: none; }
+
+/* ==========================================================
+   Projects: 16:9 cards, project pages
+   ========================================================== */
+.card .media, .case-media { aspect-ratio: 16 / 9; }
+.case-media { display: block; }
+.case-media img { transition: none; }
+
+.cat-jump { display: flex; flex-wrap: wrap; gap: 8px; }
+.cat-jump .chip { text-decoration: none; transition: border-color .3s, color .3s; }
+.cat-jump .chip:hover { border-color: rgba(255,255,255,.3); color: var(--ink); }
+
+/* project page header */
+.phero { display: grid; gap: clamp(28px, 4vw, 44px); }
+.link-arrow.back { justify-self: start; }
+.link-arrow.back svg, .link-arrow svg { width: 16px; height: 16px; }
+.phero-grid { display: grid; grid-template-columns: 1.5fr .9fr; gap: clamp(28px, 5vw, 80px); align-items: end; }
+.phero-copy { display: grid; gap: 18px; max-width: 760px; }
+.pmetas { display: grid; border-top: 1px solid var(--hair); }
+.pmeta { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--hair); }
+.pmeta b { font-weight: 500; text-align: right; color: var(--ink); }
+
+/* the work itself */
+.pwork { padding-top: 0; border-top: 0; }
+.pslides { display: grid; gap: clamp(16px, 2.4vw, 28px); }
+.pslide { margin: 0; border-radius: 10px; overflow: hidden; aspect-ratio: 16 / 9; background: #151515;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 20px 50px rgba(0,0,0,.35); }
+.pslide img { width: 100%; height: 100%; object-fit: cover; }
+/* Behance-style long form: pages stacked edge to edge at their own width */
+.plong { max-width: var(--long-w, 1440px); margin: 0 auto; display: flex; flex-direction: column; gap: 0; }
+.plong img { width: 100%; height: auto; display: block; background: #151515; }
+
+.pnext { padding-top: clamp(40px, 6vw, 72px); }
+.pnext-link { display: grid; gap: 10px; text-decoration: none; color: inherit; padding: 28px 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+.pnext-title { display: inline-flex; align-items: center; gap: 14px; font-weight: 700; letter-spacing: -.03em; font-size: clamp(30px, 4.4vw, 56px); transition: gap .35s var(--ease-out); }
+.pnext-title svg { width: .7em; height: .7em; }
+.pnext-link:hover .pnext-title { gap: 22px; }
+
+@media (max-width: 760px) {
+  .phero-grid { grid-template-columns: 1fr; }
+  .pslide { border-radius: 6px; }
+}
